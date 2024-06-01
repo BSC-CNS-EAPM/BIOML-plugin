@@ -42,6 +42,12 @@ def createPlugin():
 
     biomlPlugin.addBlock(featureSelectionBlock)
 
-    from Blocks.ModelTraining import featureSelectionBlock  # type: ignore
+    from Blocks.ModelTraining import modelTrainingBlock  # type: ignore
 
-    biomlPlugin.addBlock(featureSelectionBlock)
+    biomlPlugin.addBlock(modelTrainingBlock)
+
+    # Return the plugin
+    return biomlPlugin
+
+
+plugin = createPlugin()

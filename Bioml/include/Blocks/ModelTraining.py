@@ -18,20 +18,14 @@ inputCsv = PluginVariable(
 # ==========================#
 # Variable outputs
 # ==========================#
-outputExtraction = PluginVariable(
-    name="Feature Extraction output",
+outputtraining = PluginVariable(
+    name="Models output",
     id="out_zip",
     description="The features extracted",
     type=VariableTypes.FILE,
 )
 
-from HorusAPI import (
-    PluginVariable,
-    SlurmBlock,
-    VariableGroup,
-    VariableList,
-    VariableTypes,
-)
+from HorusAPI import PluginVariable, SlurmBlock, VariableGroup, VariableList, VariableTypes
 
 
 def initialAction(block: SlurmBlock):
@@ -51,5 +45,5 @@ modelTrainingBlock = SlurmBlock(
     description="Module training.",
     inputs=[inputCsv],
     variables=BSC_JOB_VARIABLES + [],
-    outputs=[outputClassification],
+    outputs=[outputtraining],
 )
