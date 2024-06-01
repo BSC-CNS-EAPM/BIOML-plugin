@@ -4,6 +4,8 @@ Bioml Model training
     | Train classification models.
 """
 
+from HorusAPI import PluginVariable, SlurmBlock, VariableTypes
+
 # ==========================#
 # Variable inputs
 # ==========================#
@@ -24,8 +26,6 @@ outputtraining = PluginVariable(
     description="The features extracted",
     type=VariableTypes.FILE,
 )
-
-from HorusAPI import PluginVariable, SlurmBlock, VariableGroup, VariableList, VariableTypes
 
 
 def initialAction(block: SlurmBlock):
