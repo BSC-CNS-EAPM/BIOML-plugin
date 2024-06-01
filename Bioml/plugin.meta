@@ -1,0 +1,10 @@
+{
+  "name": "Bioml",
+  "description": "The BioMl utilities plugin for Horus",
+  "author": "BSC",
+  "version": "0.0.1",
+  "pluginFile": "Bioml.py",
+  "dependencies": [
+
+  ]
+}
