@@ -14,18 +14,6 @@ def createPlugin():
     biomlPlugin = Plugin(id="Bioml")
 
     # ========== Blocks ========== #
-    from Blocks.Classification import classificationBlock  # type: ignore
-
-    biomlPlugin.addBlock(classificationLBlock)
-
-    from Blocks.Outliers import outliersBlock  # type: ignore
-
-    biomlPlugin.addBlock(outliersBlock)
-
-    from Blocks.Prediction import PredictBlock  # type: ignore
-
-    biomlPlugin.addBlock(PredictBlock)
-
     from Blocks.Regression import regressionBlock  # type: ignore
 
     biomlPlugin.addBlock(regressionBlock)
@@ -45,6 +33,14 @@ def createPlugin():
     from Blocks.ModelTraining import modelTrainingBlock  # type: ignore
 
     biomlPlugin.addBlock(modelTrainingBlock)
+
+    from Blocks.Outliers import outliersBlock  # type: ignore
+
+    biomlPlugin.addBlock(outliersBlock)
+
+    from Blocks.Prediction import PredictBlock  # type: ignore
+
+    biomlPlugin.addBlock(PredictBlock)
 
     # Return the plugin
     return biomlPlugin

@@ -16,6 +16,13 @@ inputCsv = PluginVariable(
     type=VariableTypes.FILE,
     allowedValues=["csv"],
 )
+inputOutliers = PluginVariable(
+    name="Input Outliers",
+    id="out_csv",
+    description="The CSV file with the input data",
+    type=VariableTypes.FILE,
+    allowedValues=["csv"],
+)
 
 # ==========================#
 # Variable outputs
@@ -43,7 +50,7 @@ modelTrainingBlock = SlurmBlock(
     initialAction=initialAction,
     finalAction=finalAction,
     description="Module training.",
-    inputs=[inputCsv],
+    inputs=[inputCsv, inputOutliers],
     variables=BSC_JOB_VARIABLES + [],
     outputs=[outputtraining],
 )
