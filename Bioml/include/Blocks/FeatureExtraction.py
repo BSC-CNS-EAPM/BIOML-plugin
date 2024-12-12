@@ -29,7 +29,34 @@ outputExtraction = PluginVariable(
 
 
 def initialAction(block: SlurmBlock):
-    pass
+    from BioML.features.extraction import (
+        IfeatureFeatures,
+        PossumFeatures,
+        read_features,
+    )
+    from BioML.utilities.utils import clean_fasta
+
+    clean_fasta(
+        "/home/ruite/Projects/enzyminer/POSSUM_Toolkit",
+        fasta_file,
+        "cleaned.fasta",
+        minimal_sequence_length,
+    )
+    fasta_file = "cleaned.fasta"
+
+    if extraction_type == "ifeature":
+        ifeatures = IfeatureFeatures(ifeature_path)
+        extracted_features = ifeatures.extract(fasta_file)
+
+    elif extraction_type == "possum":
+        possum = PossumFeatures(
+            pssm_dir="pssm",
+            output="possum_features",
+            program="/home/ruite/Projects/enzyminer/POSSUM_Toolkit",
+        )
+        extracted_features = possum.extract(fasta_file)
+
+    return extracted_features
 
 
 def finalAction(block: SlurmBlock):
