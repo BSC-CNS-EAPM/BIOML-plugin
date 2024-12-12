@@ -1,9 +1,11 @@
-{
+{ 
+  "id": "bioml",
   "name": "Bioml",
   "description": "The BioMl utilities plugin for Horus",
   "author": "BSC",
   "version": "0.0.1",
   "pluginFile": "Bioml.py",
+  "externalURL": "https://github.com/BSC-CNS-EAPM/BIOML-plugin.git",
   "dependencies": [
      "git+https://github.com/etiur/BioML@pycaret",
      "numpy",
