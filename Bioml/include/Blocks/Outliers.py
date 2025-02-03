@@ -50,26 +50,26 @@ scalerVar = PluginVariable(
     id="scaler",
     description="The scaler to use.",
     type=VariableTypes.STRING,
-    defaultValue="StandardScaler",
-    allowedValues=["StandardScaler", "MinMaxScaler", "RobustScaler"],
+    defaultValue="robust",
+    allowedValues=["robust", "standard", "minmax"],
 )
 contaminationVar = PluginVariable(
     name="Contamination",
     id="contamination",
     description="The contamination value.",
     type=VariableTypes.FLOAT,
-    defaultValue=None,
+    defaultValue=0.06,
 )
 numFeatures = PluginVariable(
     name="Number of features",
     id="num_features",
-    description="The number of features to use.",
-    type=VariableTypes.INTEGER,
-    defaultValue=None,
+    description="The fraction of features to use.",
+    type=VariableTypes.FLOAT,
+    defaultValue=1.0,
 )
 
 
-def runClassificationBioml(block: SlurmBlock):
+def runOutliersBioml(block: SlurmBlock):
 
     input_excel = block.inputs.get("input_excel", None)
     if input_excel is None:

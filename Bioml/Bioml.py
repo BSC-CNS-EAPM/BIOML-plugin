@@ -11,7 +11,7 @@ def createPlugin():
     """
     # ========== Plugin Definition ========== #
 
-    biomlPlugin = Plugin(id="Bioml")
+    biomlPlugin = Plugin(id="bioml")
 
     # ========== Blocks ========== #
     from Blocks.Regression import regressionBlock  # type: ignore
