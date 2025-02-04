@@ -1,5 +1,5 @@
 """
-A module that performs regression analysis on a dataset.
+A module that performs outlier detection using features
 """
 
 import os
@@ -35,6 +35,14 @@ outputOutliers = PluginVariable(
     type=VariableTypes.FILE,
 )
 
+outputCsv = PluginVariable(
+    name="Outlier csv",
+    id="out_csv",
+    description="The path to the output csv file",
+    type=VariableTypes.STRING,
+    defaultValue="training_results/outliers.csv",
+)
+
 ##############################
 #       Other variables      #
 ##############################
@@ -43,7 +51,7 @@ numThreads = PluginVariable(
     id="num_threads",
     description="The number of threads to use.",
     type=VariableTypes.INTEGER,
-    defaultValue=None,
+    defaultValue=-1,
 )
 scalerVar = PluginVariable(
     name="Scaler",
@@ -70,60 +78,34 @@ numFeatures = PluginVariable(
 
 
 def runOutliersBioml(block: SlurmBlock):
-
+    
     input_excel = block.inputs.get("input_excel", None)
     if input_excel is None:
         raise Exception("No input excel provided")
     if not os.path.exists(input_excel):
         raise Exception(f"The input excel file does not exist: {input_excel}")
 
-    input_hyperparameters = block.inputs.get("input_hyperparameters", None)
-    if input_hyperparameters is None:
-        raise Exception("No input hyperparameters provided")
-    if not os.path.exists(input_hyperparameters):
-        raise Exception(
-            f"The input hyperparameters file does not exist: {input_hyperparameters}"
-        )
-
-    input_sheets = block.inputs.get("input_sheets", None)
-    if input_sheets is None:
-        raise Exception("No input sheets provided")
-
-    input_label = block.inputs.get("input_label", None)
-    if input_label is None:
-        raise Exception("No input label provided")
-    if not os.path.exists(input_label):
-        raise Exception(f"The input label file does not exist: {input_label}")
-
-    command = "python -m BioML.Ensemble "
+    ## variables
+    num_threads = block.variables.get("num_threads", -1)
+    num_features = block.variables.get("num_features", 1.0)
+    contamination = block.variables.get("contamination", 0.06)
+    scaler = block.variables.get("scaler", "robust")
+    output_csv = block.variables.get("output_csv", "training_results/outliers.csv")
+    
+    ## change bsc variables
+    if num_threads > 1:
+        block.variables["cpus"] = num_threads
+    
+    command = "python -m BioML.utilities.outlier "
     command += f"--excel {input_excel} "
-    command += f"--hyperparameter_path {input_hyperparameters} "
-    command += f"--sheets {input_sheets} "
-    command += f"--label {input_label} "
+    command += f"-c {contamination} "
+    command += f"-s {scaler} "
+    command += f"-n {num_threads} "
+    command += f"-o {output_csv} "
+    command += f"-nfe {num_features} "
 
     jobs = [command]
-
-    folderName = block.variables.get("folder_name", "ensembleBioml")
-    block.extraData["folder_name"] = folderName
-    removeExisting = block.variables.get("remove_existing_results", False)
-
-    # If folder already exists, raise exception
-    if removeExisting and os.path.exists(folderName):
-        os.system("rm -rf " + folderName)
-
-    if not removeExisting and os.path.exists(folderName):
-        raise Exception(
-            "The folder {} already exists. Please, choose another name or remove it.".format(
-                folderName
-            )
-        )
-
-    # Create an copy the inputs
-    os.makedirs(folderName, exist_ok=True)
-    os.system(f"cp {input_excel} {folderName}")
-    os.system(f"cp {input_hyperparameters} {folderName}")
-    os.system(f"cp {input_sheets} {folderName}")
-    os.system(f"cp {input_label} {folderName}")
+    
 
     from utils import launchCalculationAction
 
@@ -132,20 +114,23 @@ def runOutliersBioml(block: SlurmBlock):
         jobs,
         program="bioml",
         uploadFolders=[
-            folderName,
+            input_excel,
         ],
     )
 
 
 def finalAction(block: SlurmBlock):
-    pass
+    from utils import downloadResultsAction
+    downloaded_path = downloadResultsAction(block)
+    
+    block.setOutput(outputOutliers.id, downloaded_path)
 
 
 from utils import BSC_JOB_VARIABLES
 
 outliersBlock = SlurmBlock(
     name="Outlier BioMl",
-    initialAction=runClassificationBioml,
+    initialAction=runOutliersBioml,
     finalAction=finalAction,
     description="Outlier detection.",
     inputs=[excelFile],
@@ -155,6 +140,7 @@ outliersBlock = SlurmBlock(
         scalerVar,
         contaminationVar,
         numFeatures,
+        
     ],
     outputs=[outputOutliers],
 )

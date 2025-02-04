@@ -9,7 +9,7 @@ def createPlugin():
     """
     Generates the Bioml plugin and returns the instance
     """
-    # ========== Plugin Definition ========== #
+    # ========== Plugin Definition ========== 
 
     biomlPlugin = Plugin(id="bioml")
 
