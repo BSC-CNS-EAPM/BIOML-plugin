@@ -4,7 +4,7 @@ Bioml Classification
     | Train classification models.
 """
 
-from HorusAPI import PluginVariable, SlurmBlock, VariableTypes
+from HorusAPI import PluginVariable, SlurmBlock, VariableTypes, PluginBlock
 
 # ==============================#
 # Variable inputs for extraction
@@ -23,58 +23,32 @@ Purpose = PluginVariable(
     description="The purpose of the program",
     type=VariableTypes.CHECKBOX,
     choices=["extract", "read", "filter"],
-    defaultValue="extract",
+    defaultValue=["extract", "read"],
 )
 
 # ================================#
 # Variable outputs for extraction
 # ================================#
 outputExtraction = PluginVariable(
-    name="Feature Extraction output",
-    id="out_zip",
-    description="The features extracted",
-    type=VariableTypes.FILE,
+    name="Extracted directory",
+    id="extracted_out",
+    description="The directory for the extracted features",
+    type=VariableTypes.STRING,
+    defaultValue="extracted_features",
 )
 
 outputIfeature = PluginVariable(
-    name="Feature Extraction output",
-    id="out_zip",
-    description="The features extracted",
-    type=VariableTypes.FILE,
+    name="Ifeature output",
+    id="ifeature_out",
+    description="The folder to save the ifeatures features",
+    type=VariableTypes.STRING,
 )
 
 outputPossum = PluginVariable(
     name="Feature Extraction output",
-    id="out_zip",
-    description="The features extracted",
-    type=VariableTypes.FILE,
-)
-
-
-# ================================#
-# Variables for filtering
-# ================================#
-
-Sheets = PluginVariable(
-    name="sheets",
-    id="sheets",
-    description="Excel sheet name (from theselected features) to use for filtering the new features",
+    id="possum_out",
+    description="The folder to save the possum features",
     type=VariableTypes.STRING,
-    defaultValue=None,
-)
-
-inputFeatures = PluginVariable(
-    name="Input features",
-    id="training_features",
-    description="The path to the training features in excel format used for filtering data",
-    type=VariableTypes.FILE,
-)
-
-outputNewFeatures = PluginVariable(
-    name="Output new features",
-    id="new_features",
-    description="The path to the new features in CSV format",
-    type=VariableTypes.FILE,
 )
 
 ##############################
@@ -85,7 +59,7 @@ inputPSSM = PluginVariable(
     name="PSSM dir input",
     id="pssm_dir",
     description="The path to the folder with the PSSM files",
-    type=VariableTypes.FOLDER,
+    type=VariableTypes.STRING,
 )
 
 
@@ -162,31 +136,82 @@ dropPossum = PluginVariable(
     defaultValue=None,
 )
 
+cleanFasta = PluginVariable(
+    name="Clean fasta",
+    id="clean_fasta",
+    description="The file name to the cleaned fasta file",
+    type=VariableTypes.STRING,
+    defaultValue=None,
+)
+
+
+##############################
+#       Omega variables      #
+##############################
+
+OmegaType = PluginVariable(
+    name="omega type",
+    id="omega_type",
+    description="The type of molecule to extract features from using Omega Features",
+    type=VariableTypes.STRING_LIST,
+   allowedValues=["structure", "RNA", "DNA", "ligand"],
+   defaultValue=None
+)
 
 
 
 def initialAction(block: SlurmBlock):
-    block.variables["script_name"] = "generate_pssm.sh"
+    ## inputs
+    input_fasta = block.inputs.get("fasta_file", None)
+    input_pssm = block.variables.get("pssm_dir", None)
+    purpose = block.variables.get("purpose", ["extract", "read"])
+    ## output folders
+    outputposum = block.variables.get("possum_out", "possum_features")
+    outputifeature = block.variables.get("ifeature_out", "ifeature_features")
+    extracted_features = block.variables.get("extracted_out", "extracted_features")
+    clean_fasta = block.variables.get("clean_fasta", None)
+    
+    ## other variables
+    num_threads = block.variables.get("num_threads", 100)
+    run = block.variables.get("run", ["possum", "ifeature"])
+    drop_ifeature = block.variables.get("drop_ifeature", [])
+    drop_possum = block.variables.get("drop_possum", [])
+    long = block.variables.get("long_command", False)
+    possum_program = block.variables.get("possum_dir", "POSSUM_Toolkit/")
+    ifeature_program = block.variables.get("ifeature_dir", "iFeature")
+    omega_type = block.variables.get("omega_type", None)
+    
 
-    clean_fasta(
-        "/home/ruite/Projects/enzyminer/POSSUM_Toolkit",
-        fasta_file,
-        "cleaned.fasta",
-        minimal_sequence_length,
-    )
-    fasta_file = "cleaned.fasta"
+    if input_fasta is None:
+        raise Exception("No input fasta provided")
+    if "possum" in run and input_pssm is None:
+        raise Exception("No input pssm folder provided to run the Possum program")
 
-    if extraction_type == "ifeature":
-        ifeatures = IfeatureFeatures(ifeature_path)
-        extracted_features = ifeatures.extract(fasta_file)
+    block.variables["cpus"] = num_threads
+    block.variables["script_name"] = "feature_extraction.sh"
 
-    elif extraction_type == "possum":
-        possum = PossumFeatures(
-            pssm_dir="pssm",
-            output="possum_features",
-            program="/home/ruite/Projects/enzyminer/POSSUM_Toolkit",
-        )
-        extracted_features = possum.extract(fasta_file)
+    command = f"python -m BioML.features.extract "
+    command += f"-i {input_fasta} "
+    command += f"-r {' '.join(run)} "
+
+    if input_pssm is not None:
+        command += f"-p {input_pssm} "
+    command += f"-Po {possum_program} "
+    command += f"-id {ifeature_program} "
+    command += f"-po {outputposum} "
+    command += f"-io {outputifeature} "
+    command += f"-on {' '.join(purpose)} "
+    if long:
+        command += f"--long "
+    if omega_type is not None:
+        command += f"--omega_type {omega_type} "
+    if drop_ifeature + drop_possum:
+        command += f"--drop {' '.join(drop_ifeature + drop_possum)} "
+    if clean_fasta:
+        command += f"-cl {clean_fasta} "
+
+    jobs = [command]
+
 
     return extracted_features
 
@@ -206,3 +231,6 @@ featureExtractionBlock = SlurmBlock(
     variables=BSC_JOB_VARIABLES + [],
     outputs=[outputExtraction],
 )
+
+
+ReadFeaturesBlock = PluginBlock(

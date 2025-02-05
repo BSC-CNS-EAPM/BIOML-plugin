@@ -45,7 +45,7 @@ databaseInput = PluginVariable(
 outputPSSM = PluginVariable(
     name="PSSM output",
     id="pssm_out",
-    description="The path to the output for the outliers.",
+    description="The output folder for PSSM files",
     type=VariableTypes.FOLDER,
 )
 
@@ -171,6 +171,7 @@ def runGeneratePSSMBioml(block: SlurmBlock):
 def finalAction(block: SlurmBlock):
     from pathlib import Path
     from utils import downloadResultsAction
+    
     downloaded_path = downloadResultsAction(block)
     out_pssm = block.extraData["pssm_dir"]
     out_fasta = block.extraData["fasta_file"]
