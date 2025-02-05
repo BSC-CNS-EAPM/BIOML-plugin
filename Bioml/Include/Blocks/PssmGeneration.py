@@ -27,7 +27,7 @@ fastaFile = PluginVariable(
 possumProgram = PluginVariable(
     name="possum program",
     id="possum_dir",
-    description="The path to the possum program directory",
+    description="The path to the possum program directory, it should be the remote path",
     type=VariableTypes.STRING,
     defaultValue="POSSUM_Toolkit/",
 )
@@ -35,7 +35,8 @@ possumProgram = PluginVariable(
 databaseInput = PluginVariable(
     name="database input",
     id="dbin",
-    description="The path to database fasta file",
+    description="""The path to database fasta file, it should already be in remote, so use the remote path, 
+    even if it is a fasta file you want to create the database from""",
     type=VariableTypes.STRING,
     defaultValue=None,
 )
@@ -118,6 +119,8 @@ def runGeneratePSSMBioml(block: SlurmBlock):
     if not os.path.exists(input_fasta):
         raise Exception(f"The input fasta file does not exist: {input_fasta}")
     
+    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    
     possum_program_dir = block.inputs.get("possum_dir", None)
     database_input = block.inputs.get("database_input", None)
     if database_input is None:
@@ -162,9 +165,7 @@ def runGeneratePSSMBioml(block: SlurmBlock):
         block,
         jobs,
         program="bioml",
-        uploadFolders=[
-            input_fasta,
-        ],
+        uploadFolders=[]
     )
 
 

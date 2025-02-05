@@ -84,6 +84,7 @@ def runOutliersBioml(block: SlurmBlock):
         raise Exception("No input excel provided")
     if not os.path.exists(input_excel):
         raise Exception(f"The input excel file does not exist: {input_excel}")
+    input_excel = block.remote.sendData(input_excel, block.remote.workDir)
 
     ## variables
     num_threads = block.variables.get("num_threads", -1)
@@ -116,7 +117,6 @@ def runOutliersBioml(block: SlurmBlock):
         jobs,
         program="bioml",
         uploadFolders=[
-            input_excel,
         ],
     )
 

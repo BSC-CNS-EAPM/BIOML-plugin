@@ -51,6 +51,14 @@ outputPossum = PluginVariable(
     type=VariableTypes.STRING,
 )
 
+
+outputFeatures = PluginVariable(
+    name="Extracted features",
+    id="extracted_feat",
+    description="The extracted features in csv file format",
+    type=VariableTypes.FILE
+)
+
 ##############################
 #       Other variables      #
 ##############################
@@ -66,7 +74,7 @@ inputPSSM = PluginVariable(
 ifeatureDir = PluginVariable(
     name="Ifeature dir",
     id="ifeature_dir",
-    description="The path to iFeature program",
+    description="The path to iFeature program, it should be the remote path",
     type=VariableTypes.STRING,
     defaultValue="iFeature",
 )
@@ -74,7 +82,7 @@ ifeatureDir = PluginVariable(
 possumProgram = PluginVariable(
     name="possum program",
     id="possum_dir",
-    description="The path to the possum program directory",
+    description="The path to the possum program directory, it should be the remote path",
     type=VariableTypes.STRING,
     defaultValue="POSSUM_Toolkit/",
 )
@@ -136,14 +144,6 @@ dropPossum = PluginVariable(
     defaultValue=None,
 )
 
-cleanFasta = PluginVariable(
-    name="Clean fasta",
-    id="clean_fasta",
-    description="The file name to the cleaned fasta file",
-    type=VariableTypes.STRING,
-    defaultValue=None,
-)
-
 
 ##############################
 #       Omega variables      #
@@ -161,6 +161,7 @@ OmegaType = PluginVariable(
 
 
 def initialAction(block: SlurmBlock):
+    from pathlib import Path
     ## inputs
     input_fasta = block.inputs.get("fasta_file", None)
     input_pssm = block.variables.get("pssm_dir", None)
@@ -169,7 +170,6 @@ def initialAction(block: SlurmBlock):
     outputposum = block.variables.get("possum_out", "possum_features")
     outputifeature = block.variables.get("ifeature_out", "ifeature_features")
     extracted_features = block.variables.get("extracted_out", "extracted_features")
-    clean_fasta = block.variables.get("clean_fasta", None)
     
     ## other variables
     num_threads = block.variables.get("num_threads", 100)
@@ -184,9 +184,21 @@ def initialAction(block: SlurmBlock):
 
     if input_fasta is None:
         raise Exception("No input fasta provided")
+    else:
+        if not Path(input_fasta).exists():
+            raise Exception(f"The input fasta file does not exist: {input_fasta}")            
     if "possum" in run and input_pssm is None:
         raise Exception("No input pssm folder provided to run the Possum program")
 
+
+    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    if input_pssm:
+        input_pssm = block.remote.sendData(input_pssm, block.remote.workDir)
+    # send data
+    block.extraData["input_fasta"] = input_fasta
+    block.extraData["input_pssm"] = input_pssm
+    block.extraData["extracted_features"] = extracted_features
+     
     block.variables["cpus"] = num_threads
     block.variables["script_name"] = "feature_extraction.sh"
 
@@ -201,23 +213,35 @@ def initialAction(block: SlurmBlock):
     command += f"-po {outputposum} "
     command += f"-io {outputifeature} "
     command += f"-on {' '.join(purpose)} "
+    command += f"-eo {extracted_features} "
     if long:
         command += f"--long "
     if omega_type is not None:
         command += f"--omega_type {omega_type} "
     if drop_ifeature + drop_possum:
         command += f"--drop {' '.join(drop_ifeature + drop_possum)} "
-    if clean_fasta:
-        command += f"-cl {clean_fasta} "
 
     jobs = [command]
 
-
-    return extracted_features
+    ## launching jobs
+    from utils import launchCalculationAction
+    
+    launchCalculationAction(
+        block,
+        jobs,
+        program="bioml",
+        uploadFolders=[]
+    )
 
 
 def finalAction(block: SlurmBlock):
-    pass
+    from pathlib import Path
+    from utils import downloadResultsAction
+    downloaded_path = downloadResultsAction(block)
+    extracted_features = block.extraData["extracted_features"]
+    file = list((Path(downloaded_path)/extracted_features).glob("*.csv"))[0]
+    
+    block.setOutput(outputFeatures.id, file)
 
 
 from utils import BSC_JOB_VARIABLES
@@ -227,10 +251,11 @@ featureExtractionBlock = SlurmBlock(
     initialAction=initialAction,
     finalAction=finalAction,
     description="Feature Extraction.",
-    inputs=[inputCsv],
-    variables=BSC_JOB_VARIABLES + [],
-    outputs=[outputExtraction],
+    inputs=[inputFasta],
+    variables=BSC_JOB_VARIABLES + [inputPSSM, Purpose, possumProgram, ifeatureDir, 
+                                   OmegaType, dropPossum, dropIFeature, 
+                                   LongCommand, numThreads, Run, outputPossum,
+                                   outputIfeature, outputExtraction],
+    outputs=[outputFeatures]
 )
 
-
-ReadFeaturesBlock = PluginBlock(
