@@ -154,6 +154,7 @@ def runGeneratePSSMBioml(block: SlurmBlock):
     ## change bsc variables
     block.variables["cpus"] = (num_threads // 10) + 1
     block.variables["cpus_per_task"] = 10
+    block.variables["script_name"] = "generate_pssm.sh"
 
     from utils import launchCalculationAction
     

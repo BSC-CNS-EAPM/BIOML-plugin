@@ -37,6 +37,10 @@ def createPlugin():
     from Blocks.Outliers import outliersBlock  # type: ignore
 
     biomlPlugin.addBlock(outliersBlock)
+    
+    from Blocks.PssmGeneration import generatePSSMBlock  # type: ignore
+
+    biomlPlugin.addBlock(generatePSSMBlock)
 
     from Blocks.Prediction import PredictBlock  # type: ignore
 

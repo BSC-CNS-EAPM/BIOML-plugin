@@ -95,6 +95,8 @@ def runOutliersBioml(block: SlurmBlock):
     ## change bsc variables
     if num_threads > 1:
         block.variables["cpus"] = num_threads
+
+    block.variables["script_name"] = "outliers.sh"
     
     command = "python -m BioML.utilities.outlier "
     command += f"--excel {input_excel} "
