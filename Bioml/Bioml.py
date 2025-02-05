@@ -45,6 +45,10 @@ def createPlugin():
     from Blocks.Prediction import PredictBlock  # type: ignore
 
     biomlPlugin.addBlock(PredictBlock)
+    
+    from Blocks.EmbeddingExtraction import EmbeddingBlock  # type: ignore
+
+    biomlPlugin.addBlock(EmbeddingBlock)
 
     # Return the plugin
     return biomlPlugin

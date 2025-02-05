@@ -1,7 +1,5 @@
 """
-Bioml Classification
-    | Wrapper class for the bioml Classification module.
-    | Train classification models.
+Bioml Feature extraction: using iFeature, Posum or iFeatureOmega
 """
 
 from HorusAPI import PluginVariable, SlurmBlock, VariableTypes, PluginBlock
@@ -15,6 +13,7 @@ inputFasta = PluginVariable(
     id="fasta_file",
     description="The path to the fasta file",
     type=VariableTypes.FILE,
+    allowedValues=[".fasta", ".fsa"]
 )
 
 Purpose = PluginVariable(
@@ -22,7 +21,7 @@ Purpose = PluginVariable(
     id="purpose",
     description="The purpose of the program",
     type=VariableTypes.CHECKBOX,
-    choices=["extract", "read", "filter"],
+    allowedValues=["extract", "read", "filter"],
     defaultValue=["extract", "read"],
 )
 
