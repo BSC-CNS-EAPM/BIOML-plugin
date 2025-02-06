@@ -13,7 +13,7 @@ inputFasta = PluginVariable(
     id="fasta_file",
     description="The path to the fasta file",
     type=VariableTypes.FILE,
-    allowedValues=[".fasta", ".fsa"]
+    allowedValues=["fasta", "fsa"]
 )
 
 Purpose = PluginVariable(

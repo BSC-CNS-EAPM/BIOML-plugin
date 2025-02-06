@@ -26,8 +26,8 @@ fastaFile = PluginVariable(
 modelPath = PluginVariable(
     name="Model Path",
     id="model_path",
-    description="The path to the model.",
-    type=VariableTypes.FILE,
+    description="The path to the model folder",
+    type=VariableTypes.Folder,
     defaultValue=None,
 )
 testFeatures = PluginVariable(
@@ -47,6 +47,14 @@ trainingFeatures = PluginVariable(
     allowedValues=["csv", "xlsx"],
 )
 
+Problem = PluginVariable(
+    name="The machine learning problem",
+    id="problem",
+    description="The machine learning problem: classification or regression",
+    type=VariableTypes.STRING_LIST,
+    allowedValues=["classification", "regression"],
+)
+
 # ==========================#
 # Variable outputs
 # ==========================#
@@ -54,177 +62,53 @@ outputPrediction = PluginVariable(
     name="Prediction output",
     id="out_zip",
     description="The zip file to the output for the prediction results",
-    type=VariableTypes.FILE,
+    type=VariableTypes.FOLDER,
 )
 
 ##############################
 #       Other variables      #
 ##############################
-trainingOutput = PluginVariable(
-    name="Training Output",
-    id="training_output",
-    description="The path where to save the models training results.",
-    type=VariableTypes.FOLDER,
-    defaultValue=None,
+predictionOutput = PluginVariable(
+    name="Prediction Output",
+    id="prediction_dir",
+    description="The path where to save the prediction results.",
+    type=VariableTypes.STRING,
+    defaultValue="prediction_results",
 )
+
 scalerVar = PluginVariable(
     name="Scaler",
     id="scaler",
     description="Choose one of the scaler available in scikit-learn, defaults to zscore.",
     type=VariableTypes.STRING_LIST,
     allowedValues=["robust", "zscore", "minmax"],
-    defaultValue=None,
+    defaultValue="zscore",
 )
-kfoldParameters = PluginVariable(
-    name="Kfold Parameters",
-    id="kfold_parameters",
-    description="The parameters for the kfold in num_split:test_size format ('5:0.2').",
+
+outliersTrain = PluginVariable(
+    name="Outliers train",
+    id="outliers_train",
+    description="Path to a list of outliers if any a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
     type=VariableTypes.STRING,
     defaultValue=None,
 )
-outliersVar = PluginVariable(
-    name="Outliers",
-    id="outliers",
-    description="A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line",
+
+outliersTest = PluginVariable(
+    name="Outliers test",
+    id="outliers_test",
+    description="Path to a list of outliers if any a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
     type=VariableTypes.STRING,
     defaultValue=None,
 )
-budgetTime = PluginVariable(
-    name="Budget Time",
-    id="budget_time",
-    description="The time budget for the training in minutes, should be > 0 or None.",
-    type=VariableTypes.FLOAT,
-    defaultValue=None,
+
+inputLables = PluginVariable(
+    name="Input labels",
+    id="in_labels",
+    description="The label  column name if label in features to remove it, otherwise unnecessary",
+    type=VariableTypes.STRING,
 )
-precisionWeight = PluginVariable(
-    name="Precision Weight",
-    id="precision_weight",
-    description="Weights to specify how relevant is the precision for the ranking of the different features.",
-    type=VariableTypes.FLOAT,
-    defaultValue=None,
-)
-recallWeight = PluginVariable(
-    name="Recall Weight",
-    id="recall_weight",
-    description="Weights to specify how relevant is the recall for the ranking of the different features.",
-    type=VariableTypes.FLOAT,
-    defaultValue=None,
-)
-reportWeight = PluginVariable(
-    name="Report Weight",
-    id="report_weight",
-    description="Weights to specify how relevant is the f1, precision and recall for the ranking of the different features with respect to MCC which is a more general measures of the performance of a model.",
-    type=VariableTypes.FLOAT,
-    defaultValue=None,
-)
-differenceWeight = PluginVariable(
-    name="Difference Weight",
-    id="difference_weight",
-    description="How important is to have similar training and test metrics.",
-    type=VariableTypes.FLOAT,
-    defaultValue=None,
-)
-bestModels = PluginVariable(
-    name="Best Models",
-    id="best_models",
-    description="The number of best models to select, it affects the analysis and the saved hyperparameters.",
-    type=VariableTypes.INTEGER,
-    defaultValue=None,
-)
-seedVar = PluginVariable(
-    name="Seed",
-    id="seed",
-    description="The seed for the random state.",
-    type=VariableTypes.INTEGER,
-    defaultValue=None,
-)
-dropVar = PluginVariable(
-    name="Drop",
-    id="drop",
-    description="The models to drop.",
-    type=VariableTypes.STRING_LIST,
-    defaultValue=None,
-    allowedValues=[
-        "lr",
-        "knn",
-        "nb",
-        "dt",
-        "svm",
-        "rbfsvm",
-        "gpc",
-        "mlp",
-        "ridge",
-        "rf",
-        "qda",
-        "ada",
-        "gbc",
-        "lda",
-        "et",
-        "xgboost",
-        "lightgbm",
-        "catboost",
-        "dummy",
-    ],
-)
-selectedVar = PluginVariable(
-    name="Selected",
-    id="selected",
-    description="The models to select.",
-    type=VariableTypes.STRING_LIST,
-    defaultValue=None,
-    allowedValues=[
-        "lr",
-        "knn",
-        "nb",
-        "dt",
-        "svm",
-        "rbfsvm",
-        "gpc",
-        "mlp",
-        "ridge",
-        "rf",
-        "qda",
-        "ada",
-        "gbc",
-        "lda",
-        "et",
-        "xgboost",
-        "lightgbm",
-        "catboost",
-        "dummy",
-    ],
-)
-tuneVar = PluginVariable(
-    name="Tune",
-    id="tune",
-    description="If to tune the best models.",
-    type=VariableTypes.BOOLEAN,
-    defaultValue=None,
-)
-plotVar = PluginVariable(
-    name="Plot",
-    id="plot",
-    description="The plots to save.",
-    type=VariableTypes.STRING_LIST,
-    defaultValue=None,
-    allowedValues=["learning", "confusion_matrix", "class_report", "pr", "auc"],
-)
-optimizeVar = PluginVariable(
-    name="Optimize",
-    id="optimize",
-    description="The metric to optimize for retuning the best models.",
-    type=VariableTypes.STRING_LIST,
-    defaultValue=None,
-    allowedValues=[
-        "MCC",
-        "Prec.",
-        "Recall",
-        "F1",
-        "AUC",
-        "Accuracy",
-        "Average Precision Score",
-    ],
-)
+
+
 sheetName = PluginVariable(
     name="Sheet Name",
     id="sheet_name",
@@ -232,120 +116,106 @@ sheetName = PluginVariable(
     type=VariableTypes.STRING,
     defaultValue=None,
 )
-numIter = PluginVariable(
-    name="Number of Iterations",
-    id="num_iter",
-    description="The number of iterations for the hyperparameter search.",
+
+numSimilarSamples = PluginVariable(
+    name="Number of similar samples",
+    id="num_similar_samples",
+    description="The number of similar samples to use for filtering based on applicability domain",
     type=VariableTypes.INTEGER,
-    defaultValue=None,
+    defaultValue=1,
 )
-splitStrategy = PluginVariable(
-    name="Split Strategy",
-    id="split_strategy",
-    description="The strategy to split the data.",
-    type=VariableTypes.STRING_LIST,
-    defaultValue=None,
-    allowedValues=["mutations", "cluster", "stratifiedkfold", "kfold"],
-)
-clusterVar = PluginVariable(
-    name="Cluster",
-    id="cluster",
-    description="The path to the cluster file generated by mmseqs2 or a custom group index file just like data/resultsDB_clu.tsv.",
-    type=VariableTypes.FILE,
-    defaultValue=None,
-)
-mutationsVar = PluginVariable(
-    name="Mutations",
-    id="mutations",
-    description="The column name of the mutations in the training data.",
-    type=VariableTypes.STRING,
-    defaultValue=None,
-)
-testNumMutations = PluginVariable(
-    name="Test Number of Mutations",
-    id="test_num_mutations",
-    description="The threshold of number of mutations to be included in the test set.",
-    type=VariableTypes.INTEGER,
-    defaultValue=None,
-)
-greaterVar = PluginVariable(
-    name="Greater",
-    id="greater",
-    description="Include in the test set, mutations that are greater of less than the threshold, default greater.",
+
+applicabilityDomain = PluginVariable(
+    name="applicability domain",
+    id="applicability_domain",
+    description="If to use applicability domain filtering",
     type=VariableTypes.BOOLEAN,
-    defaultValue=None,
-)
-shuffleVar = PluginVariable(
-    name="Shuffle",
-    id="shuffle",
-    description="If to shuffle the data before splitting.",
-    type=VariableTypes.BOOLEAN,
-    defaultValue=None,
-)
-crossValidation = PluginVariable(
-    name="Cross Validation",
-    id="cross_validation",
-    description="If to use cross validation, default is True.",
-    type=VariableTypes.BOOLEAN,
-    defaultValue=None,
+    defaultValue=True,
 )
 
 
-def runClassificationBioml(block: SlurmBlock):
+def runPredictionBioml(block: SlurmBlock):
+    from pathlib import Path
 
-    input_excel = block.inputs.get("input_excel", None)
-    if input_excel is None:
-        raise Exception("No input excel provided")
-    if not os.path.exists(input_excel):
-        raise Exception(f"The input excel file does not exist: {input_excel}")
-
-    input_hyperparameters = block.inputs.get("input_hyperparameters", None)
-    if input_hyperparameters is None:
-        raise Exception("No input hyperparameters provided")
-    if not os.path.exists(input_hyperparameters):
+    #inputs
+    input_fasta = block.inputs.get("fasta_file", None)
+    if input_fasta is None:
+        raise Exception("No input fasta provided")
+    if not os.path.exists(input_fasta):
+        raise Exception(f"The input fasta file does not exist: {input_fasta}")
+    training_features = block.inputs.get("training_features", None)
+    if training_features is None:
+        raise Exception("No training features provided")
+    if not os.path.exists(training_features):
         raise Exception(
-            f"The input hyperparameters file does not exist: {input_hyperparameters}"
+            f"The training features file does not exist: {training_features}"
         )
 
-    input_sheets = block.inputs.get("input_sheets", None)
-    if input_sheets is None:
-        raise Exception("No input sheets provided")
+    test_features = block.inputs.get("test_features", None)
+    if test_features is None:
+        raise Exception("No test features provided")
+    if not os.path.exists(test_features):
+        raise Exception(f"The test features file does not exist: {test_features}")
 
-    input_label = block.inputs.get("input_label", None)
-    if input_label is None:
-        raise Exception("No input label provided")
-    if not os.path.exists(input_label):
-        raise Exception(f"The input label file does not exist: {input_label}")
+    model_path = block.inputs.get("model_path", None)
+    if model_path is None:
+        raise Exception("No model path provided")
+    if not os.path.exists(model_path):
+        raise Exception(f"The model path does not exist: {model_path}")
+    
+    problem = block.inputs.get("problem", None)
+    if problem is None:
+        raise Exception("No problem provided")
 
-    command = "python -m BioML.Ensemble "
-    command += f"--excel {input_excel} "
-    command += f"--hyperparameter_path {input_hyperparameters} "
-    command += f"--sheets {input_sheets} "
-    command += f"--label {input_label} "
-
-    jobs = [command]
-
-    folderName = block.variables.get("folder_name", "ensembleBioml")
-    block.extraData["folder_name"] = folderName
-    removeExisting = block.variables.get("remove_existing_results", False)
-
-    # If folder already exists, raise exception
-    if removeExisting and os.path.exists(folderName):
-        os.system("rm -rf " + folderName)
-
-    if not removeExisting and os.path.exists(folderName):
-        raise Exception(
-            "The folder {} already exists. Please, choose another name or remove it.".format(
-                folderName
-            )
-        )
+    ## Other variables
+    scaler = block.variables.get("scaler", "zscore")
+    sheets = block.variables.get("sheet_name", None)
+    label_name = block.variables.get("in_label", None)
+    num_similar_samples = block.variables.get("num_similar_samples", 1)
+    applicability_domain = block.variables.get("applicability_domain", True)
+    outliers_train = block.variables.get("outliers_train", None)
+    outliers_test = block.variables.get("outliers_test", None)
+    prediction_output = block.variables.get("prediction_dir", "prediction_results")
+    
+    folderName = "prediction_inputs"
 
     # Create an copy the inputs
     os.makedirs(folderName, exist_ok=True)
-    os.system(f"cp {input_excel} {folderName}")
-    os.system(f"cp {input_hyperparameters} {folderName}")
-    os.system(f"cp {input_sheets} {folderName}")
-    os.system(f"cp {input_label} {folderName}")
+    os.system(f"cp {input_fasta} {folderName}")
+    os.system(f"cp {training_features} {folderName}")
+    os.system(f"cp {test_features} {folderName}")
+    os.system(f"cp -r {model_path} {folderName}")
+    if outliers_train:
+        os.system(f"cp {outliers_train} {folderName}")
+    if outliers_test:
+        os.system(f"cp {outliers_test} {folderName}")
+
+    # Run the command
+    command = "python -m BioML.models.predict "
+    command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
+    command += f"--model_path {folderName}/{Path(model_path).name} "
+    command += f"--training_features {folderName}/{Path(training_features).name} "
+    command += f"--test_features {folderName}/{Path(test_features).name} "
+    command += f"--problem {problem} "
+    command += f"--scaler {scaler} "
+    command += f"-nss {num_similar_samples} "
+    if not applicability_domain:
+        command += f"-ad {applicability_domain} "
+    if sheets:
+        command += f"--sheets {sheets} "
+    if label_name:
+        command += f"--label {label_name} "
+    if outliers_test:
+        command += f"--outliers_test {folderName}/{Path(outliers_train).name} "
+    if outliers_train:
+        command += f"--outliers_train {folderName}/{Path(outliers_test).name} "
+
+    command += f"--res_dir {prediction_output} "
+
+    jobs = [command]
+
+
+    block.extraData["prediction_dir"] = prediction_output
 
     from utils import launchCalculationAction
 
@@ -360,17 +230,33 @@ def runClassificationBioml(block: SlurmBlock):
 
 
 def finalAction(block: SlurmBlock):
-    pass
+    from utils import downloadResultsAction
+    from pathlib import Path
+
+    downloaded_path = downloadResultsAction(block)
+    prediction_output = block.extraData.get("prediction_dir", "prediction_results")
+
+    block.setOutput(outputPrediction.id, Path(downloaded_path)/prediction_output)
 
 
 from utils import BSC_JOB_VARIABLES
 
 PredictBlock = SlurmBlock(
     name="Predict BioMl",
-    initialAction=runClassificationBioml,
+    initialAction=runPredictionBioml,
     finalAction=finalAction,
     description="Predict using the models and average the votations.",
-    inputs=[fastaFile, modelPath, testFeatures, trainingFeatures],
-    variables=BSC_JOB_VARIABLES + [],
+    inputs=[fastaFile, modelPath, testFeatures, trainingFeatures, Problem],
+    variables=BSC_JOB_VARIABLES + [
+        scalerVar,
+        sheetName,
+        inputLables,
+        numSimilarSamples,
+        applicabilityDomain,
+        outliersTrain,
+        outliersTest,
+        predictionOutput,
+        
+    ],
     outputs=[outputPrediction],
 )
