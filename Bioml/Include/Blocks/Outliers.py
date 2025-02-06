@@ -90,7 +90,7 @@ def runOutliersBioml(block: SlurmBlock):
     num_threads = block.variables.get("num_threads", -1)
     num_features = block.variables.get("num_features", 1.0)
     contamination = block.variables.get("contamination", 0.06)
-    scaler = block.variables.get("scaler", "robust")
+    scaler = block.variables.get("scaler", "zscore")
     output_csv = block.variables.get("output_csv", "training_results/outliers.csv")
     
     ## change bsc variables
@@ -142,6 +142,7 @@ outliersBlock = SlurmBlock(
         scalerVar,
         contaminationVar,
         numFeatures,
+        outputCsv
         
     ],
     outputs=[outputOutliers],
