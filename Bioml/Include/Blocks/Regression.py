@@ -120,27 +120,8 @@ budgetTime = PluginVariable(
     type=VariableTypes.FLOAT,
     defaultValue=None,
 )
-precisionWeight = PluginVariable(
-    name="Precision Weight",
-    id="precision_weight",
-    description="Weights to specify how relevant is the precision for the ranking of the different features.",
-    type=VariableTypes.FLOAT,
-    defaultValue=1.2,
-)
-recallWeight = PluginVariable(
-    name="Recall Weight",
-    id="recall_weight",
-    description="Weights to specify how relevant is the recall for the ranking of the different features.",
-    type=VariableTypes.FLOAT,
-    defaultValue=0.8,
-)
-reportWeight = PluginVariable(
-    name="Report Weight",
-    id="report_weight",
-    description="Weights to specify how relevant is the f1, precision and recall for the ranking of the different features with respect to MCC which is a more general measures of the performance of a model.",
-    type=VariableTypes.FLOAT,
-    defaultValue=1,
-)
+
+
 differenceWeight = PluginVariable(
     name="Difference Weight",
     id="difference_weight",
@@ -167,27 +148,11 @@ dropVar = PluginVariable(
     id="drop",
     description="The models to drop.",
     type=VariableTypes.CHECKBOX,
-    defaultValue=["ada"],
+    defaultValue=["tr", "kr", "ransac"],
     allowedValues=[
-        "lr",
-        "knn",
-        "nb",
-        "dt",
-        "svm",
-        "rbfsvm",
-        "gpc",
-        "mlp",
-        "ridge",
-        "rf",
-        "qda",
-        "ada",
-        "gbc",
-        "lda",
-        "et",
-        "xgboost",
-        "lightgbm",
-        "catboost",
-        "dummy",
+        'lr','lasso','ridge','en','lar','llar','omp','br','ard','par','ransac',
+                                  'tr','huber','kr','svm','knn','dt','rf','et','ada','gbr','mlp','xgboost',
+                                  'lightgbm','catboost','dummy'
     ],
 )
 selectedVar = PluginVariable(
@@ -197,25 +162,9 @@ selectedVar = PluginVariable(
     type=VariableTypes.CHECKBOX,
     defaultValue=None,
     allowedValues=[
-        "lr",
-        "knn",
-        "nb",
-        "dt",
-        "svm",
-        "rbfsvm",
-        "gpc",
-        "mlp",
-        "ridge",
-        "rf",
-        "qda",
-        "ada",
-        "gbc",
-        "lda",
-        "et",
-        "xgboost",
-        "lightgbm",
-        "catboost",
-        "dummy",
+        'lr','lasso','ridge','en','lar','llar','omp','br','ard','par','ransac',
+                                  'tr','huber','kr','svm','knn','dt','rf','et','ada','gbr','mlp','xgboost',
+                                  'lightgbm','catboost','dummy'
     ],
 )
 
@@ -224,8 +173,8 @@ plotVar = PluginVariable(
     id="plot",
     description="The plots to save.",
     type=VariableTypes.CHECKBOX,
-    defaultValue=["learning", "confusion_matrix", "class_report", "pr", "auc"],
-    allowedValues=["learning", "confusion_matrix", "class_report", "pr", "auc"],
+    defaultValue=["residuals", "error", "learning"],
+    allowedValues=["residuals", "error", "learning"],
 )
 
 sheetName = PluginVariable(
@@ -247,8 +196,8 @@ splitStrategy = PluginVariable(
     id="split_strategy",
     description="The strategy to split the data.",
     type=VariableTypes.STRING_LIST,
-    defaultValue="stratifiedkfold",
-    allowedValues=["mutations", "cluster", "stratifiedkfold", "kfold"],
+    defaultValue="kfold",
+    allowedValues=["mutations", "cluster", "kfold"],
 )
 clusterVar = PluginVariable(
     name="Cluster",
@@ -302,7 +251,7 @@ numThreads = PluginVariable(
 )
 
 
-def runClassificationBioml(block: SlurmBlock):
+def runRegressionBioml(block: SlurmBlock):
     from pathlib import Path
     #inputs
     training_features = block.inputs.get("training_features", None)
@@ -311,7 +260,7 @@ def runClassificationBioml(block: SlurmBlock):
     if not os.path.exists(training_features):
         raise Exception(f"The input features file does not exist: {training_features}")
 
-    optimize = block.inputs.get("optimize", "MCC")
+    optimize = block.inputs.get("optimize", "RMSE")
     tune = block.inputs.get("tune", True)
     
     input_label_string = block.inputs.get("input_label_string", None)
@@ -326,7 +275,7 @@ def runClassificationBioml(block: SlurmBlock):
     sheets = block.variables.get("sheet_name", None)
     seed = block.variables.get("seed", 63462634)
     num_Iter = block.variables.get("num_iter", 30)
-    split_strategy = block.variables.get("split_strategy", "stratifiedkfold")
+    split_strategy = block.variables.get("split_strategy", "kfold")
     cluster = block.variables.get("cluster", None)
     shuffle = block.variables.get("shuffle", True)
     cross_validation = block.variables.get("cross_validation", True)
@@ -337,14 +286,11 @@ def runClassificationBioml(block: SlurmBlock):
     kfold_parameters = block.variables.get("kfold_parameters", "5:0.2")
     outliers = block.variables.get("outliers", None)
     selected_models = block.variables.get("selected", None)
-    plot = block.variables.get("plot", ["learning", "confusion_matrix", "class_report", "pr", "auc"])
+    plot = block.variables.get("plot", ["residuals", "error", "learning"])
     best_models = block.variables.get("best_models", 3)
-    report_weight = block.variables.get("report_weight", 1)
     difference_weight = block.variables.get("difference_weight", 1.2)
-    precision_weight = block.variables.get("precision_weight", 1.2)
-    drop = block.variables.get("drop", ["ada"])
+    drop = block.variables.get("drop", ["tr", "kr", "ransac"])
     budget_time = block.variables.get("budget_time", None)
-    recall_weight = block.variables.get("recall_weight", 0.8)
     num_threads = block.variables.get("num_threads", 100)
     
     ## Create the output folder
@@ -376,12 +322,9 @@ def runClassificationBioml(block: SlurmBlock):
     command += f"-st {split_strategy} "
     command += f"-bu {budget_time} "
     command += f"-ni {num_Iter} "
-    command += f"-rpw {report_weight} "
     command += f"-dw {difference_weight} "
     command += f"-be {best_models} "
     command += f"-op {optimize} "
-    command += f"-pw {precision_weight} "
-    command += f"-rw {recall_weight} "
     
     if plot:
         command += f"-p {' '.join(plot)} "
@@ -433,19 +376,19 @@ def finalAction(block: SlurmBlock):
 
     download_path = downloadResultsAction(block)
 
-    output_folder = block.extraData.get("output_folder", "classification_results")
+    output_folder = block.extraData.get("output_folder", "regression_results")
     FolderName = Path(download_path) / output_folder
 
-    block.setOutput(outputClassification.id, FolderName)
+    block.setOutput(outputRegression.id, FolderName)
 
 
 from utils import BSC_JOB_VARIABLES
 
-classificationBlock = SlurmBlock(
-    name="Classification BioML",
-    initialAction=runClassificationBioml,
+regressionBlock = SlurmBlock(
+    name="Regression BioML",
+    initialAction=runRegressionBioml,
     finalAction=finalAction,
-    description="Train classification models.",
+    description="Train regression models.",
     inputGroups=[fileGroup, stringGroup],
     variables=BSC_JOB_VARIABLES
     + [
@@ -456,9 +399,6 @@ classificationBlock = SlurmBlock(
         kfoldParameters,
         outliersVar,
         budgetTime,
-        precisionWeight,
-        recallWeight,
-        reportWeight,
         differenceWeight,
         bestModels,
         seedVar,
@@ -472,7 +412,8 @@ classificationBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
+        numThreads
         
     ],
-    outputs=[outputClassification],
+    outputs=[outputRegression],
 )

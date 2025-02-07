@@ -234,7 +234,7 @@ plotVar = PluginVariable(
     id="plot",
     description="The plots to save.",
     type=VariableTypes.CHECKBOX,
-    defaultValue=["learning", "confusion_matrix", "class_report", "pr", "auc"],
+    defaultValue=["learning", "confusion_matrix", "class_report"],
     allowedValues=["learning", "confusion_matrix", "class_report", "pr", "auc"],
 )
 
@@ -348,7 +348,7 @@ def runClassificationBioml(block: SlurmBlock):
     kfold_parameters = block.variables.get("kfold_parameters", "5:0.2")
     outliers = block.variables.get("outliers", None)
     selected_models = block.variables.get("selected", None)
-    plot = block.variables.get("plot", ["learning", "confusion_matrix", "class_report", "pr", "auc"])
+    plot = block.variables.get("plot", ["learning", "confusion_matrix", "class_report"])
     best_models = block.variables.get("best_models", 3)
     report_weight = block.variables.get("report_weight", 1)
     difference_weight = block.variables.get("difference_weight", 1.2)
@@ -482,7 +482,7 @@ classificationBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        
+        numThreads,
     ],
     outputs=[outputClassification],
 )
