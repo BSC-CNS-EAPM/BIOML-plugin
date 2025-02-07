@@ -228,7 +228,7 @@ featureSelectionBlock = SlurmBlock(
     initialAction=initialAction,
     finalAction=finalAction,
     description="Feature Selection.",
-    inputs=[inputCsv, Problem, inputLables],
+    inputs=[inputCsv, Problem, inputLabels],
     variables=BSC_JOB_VARIABLES + [
         featureRange,
         numThreads,
