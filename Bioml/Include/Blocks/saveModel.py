@@ -129,7 +129,6 @@ RegressionGroup = VariableGroup(
 )
 
 
-
 # ==========================#
 # Variable outputs
 # ==========================#
@@ -149,6 +148,14 @@ ModelDir = PluginVariable(
     description="The path where to save the models training results.",
     type=VariableTypes.STRING,
     defaultValue="models",
+)
+
+numThreads = PluginVariable(
+    name="Number of threads",
+    id="num_threads",
+    description="The number of threads to use.",
+    type=VariableTypes.INTEGER,
+    defaultValue=20,
 )
 
 scalerVar = PluginVariable(
@@ -179,7 +186,7 @@ outliersVar = PluginVariable(
     name="Outliers",
     id="outliers",
     description="Path to a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
-    type=VariableTypes.STRING,
+    type=VariableTypes.FILE,
     defaultValue=None,
 )
 ModelStrategy = PluginVariable(
@@ -289,13 +296,13 @@ greaterVar = PluginVariable(
 
 
 def runSaveModelBioml(block: SlurmBlock):
-
+    from pathlib import Path
     ## inputs
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
         raise Exception("No input label provided")
-    if not os.path.exists(input_label):
-        raise Exception(f"The input label file does not exist: {input_label}")
+    if os.path.exists(input_label):
+        file = True
         
     problem = block.inputs.get("problem", None)
     if problem is None:
@@ -335,13 +342,15 @@ def runSaveModelBioml(block: SlurmBlock):
     model_strategy = block.variables.get("model_strategy", "simple:0")
     optimize_classification = block.variables.get("optimize_classification", "MCC")
     optimize_regression = block.variables.get("optimize_regression", "RMSE")
+    num_threads = block.variables.get("num_threads", 20)
     
     model_output = block.variables.get("model_dirname", "models")
 
     # Create an copy the inputs
     folderName = "savemodel_inputs"
     os.makedirs(folderName, exist_ok=True)
-    os.system(f"cp {input_label} {folderName}")
+    if file:
+        os.system(f"cp {input_label} {folderName}")
     os.system(f"cp {training_features} {folderName}")
     if cluster:
         if not os.path.exists(cluster):
@@ -354,8 +363,11 @@ def runSaveModelBioml(block: SlurmBlock):
     
     ## Command
     command = "python -m BioML.models.save_models "
-    command += f"-l {folderName}/{input_label} "
-    command += f"-i {folderName}/{training_features} "
+    if file:
+        command += f"-l {folderName}/{Path(input_label).name} "
+    else:
+        command += f"-l {input_label} "
+    command += f"-i {folderName}/{Path(training_features).name} "
     command += f"-sc {scaler} "
     command += f"-o {model_output} "
     command += f"-k {kfold_parameters} "
@@ -380,9 +392,9 @@ def runSaveModelBioml(block: SlurmBlock):
     if not greater:
         command += f"-g "
     if cluster:
-        command += f"-c {folderName}/{cluster} "
+        command += f"-c {folderName}/{Path(cluster).name} " 
     if outliers:
-        command += f"-ot {folderName}/{outliers} "
+        command += f"-ot {folderName}/{Path(outliers).name} "
     command += f"-p {problem} "
     if not tune:
         command += f"--tune "
@@ -392,6 +404,7 @@ def runSaveModelBioml(block: SlurmBlock):
     jobs = [command]
 
     block.variables["script_name"] = "save_model.sh"
+    block.variables["cpus"] = num_threads
     block.extraData["model_output"] = model_output
     
 
@@ -437,7 +450,6 @@ SaveModelBlock = SlurmBlock(
         kfoldParameters,
         outliersVar,
         seedVar,
-        tuneVar,
         sheetName,
         numIter,
         splitStrategy,
@@ -447,6 +459,7 @@ SaveModelBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
+        numThreads
     ],
     outputs=[outputModel],
 )

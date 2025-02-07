@@ -127,7 +127,6 @@ pretrainedConfig = PluginVariable(
 )
 
 def GenerateEmbeddings(block: SlurmBlock):
-    from pathlib import Path 
     
     input_fasta = block.inputs.get("fasta_file", None)
     if input_fasta is None:

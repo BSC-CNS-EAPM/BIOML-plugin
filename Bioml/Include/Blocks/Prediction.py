@@ -27,7 +27,7 @@ modelPath = PluginVariable(
     name="Model Path",
     id="model_path",
     description="The path to the model folder",
-    type=VariableTypes.Folder,
+    type=VariableTypes.FOLDER,
     defaultValue=None,
 )
 testFeatures = PluginVariable(
@@ -53,6 +53,13 @@ Problem = PluginVariable(
     description="The machine learning problem: classification or regression",
     type=VariableTypes.STRING_LIST,
     allowedValues=["classification", "regression"],
+)
+
+inputLables = PluginVariable(
+    name="Input labels",
+    id="in_labels",
+    description="The label column name if label in features to remove it, otherwise unnecessary",
+    type=VariableTypes.STRING,
 )
 
 # ==========================#
@@ -89,7 +96,7 @@ outliersTrain = PluginVariable(
     name="Outliers train",
     id="outliers_train",
     description="Path to a list of outliers if any a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
-    type=VariableTypes.STRING,
+    type=VariableTypes.FILE,
     defaultValue=None,
 )
 
@@ -97,16 +104,11 @@ outliersTest = PluginVariable(
     name="Outliers test",
     id="outliers_test",
     description="Path to a list of outliers if any a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
-    type=VariableTypes.STRING,
+    type=VariableTypes.FILE,
     defaultValue=None,
 )
 
-inputLables = PluginVariable(
-    name="Input labels",
-    id="in_labels",
-    description="The label  column name if label in features to remove it, otherwise unnecessary",
-    type=VariableTypes.STRING,
-)
+
 
 
 sheetName = PluginVariable(
@@ -151,6 +153,12 @@ def runPredictionBioml(block: SlurmBlock):
             f"The training features file does not exist: {training_features}"
         )
 
+    input_label = block.variables.get("in_label", None)
+    if input_label is None:
+        raise Exception("No input label provided")
+    if os.path.exists(input_label):
+        file = True
+    
     test_features = block.inputs.get("test_features", None)
     if test_features is None:
         raise Exception("No test features provided")
@@ -170,7 +178,7 @@ def runPredictionBioml(block: SlurmBlock):
     ## Other variables
     scaler = block.variables.get("scaler", "zscore")
     sheets = block.variables.get("sheet_name", None)
-    label_name = block.variables.get("in_label", None)
+    
     num_similar_samples = block.variables.get("num_similar_samples", 1)
     applicability_domain = block.variables.get("applicability_domain", True)
     outliers_train = block.variables.get("outliers_train", None)
@@ -193,6 +201,8 @@ def runPredictionBioml(block: SlurmBlock):
         if not os.path.exists(outliers_test):
             raise Exception(f"The outliers test file does not exist: {outliers_test}")
         os.system(f"cp {outliers_test} {folderName}")
+    if file:
+        os.system(f"cp {input_label} {folderName}")
 
     # Run the command
     command = "python -m BioML.models.predict "
@@ -207,8 +217,10 @@ def runPredictionBioml(block: SlurmBlock):
         command += f"-ad {applicability_domain} "
     if sheets:
         command += f"--sheets {sheets} "
-    if label_name:
-        command += f"--label {label_name} "
+    if not file:
+        command += f"--label {input_label} "
+    else:
+        command += f"--label {folderName}/{Path(input_label).name} "
     if outliers_test:
         command += f"--outliers_test {folderName}/{Path(outliers_train).name} "
     if outliers_train:

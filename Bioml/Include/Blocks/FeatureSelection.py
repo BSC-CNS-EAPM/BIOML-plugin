@@ -89,6 +89,21 @@ scalerVar = PluginVariable(
     allowedValues=["robust", "standard", "minmax"],
 )
 
+outliersVar = PluginVariable(
+    name="Outliers",
+    id="outliers",
+    description="Path to a file in plain text format, each record should be in a new line, the name should be the same as in the excel file with the filtered features",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+)
+
+sheetName = PluginVariable(
+    name="Sheet Name",
+    id="sheet_name",
+    description="The sheet name for the excel file if the training features is in excel format.",
+    type=VariableTypes.STRING,
+    defaultValue=None,
+)
 
 rfeSteps = PluginVariable(
     name="Number RFE steps",
@@ -153,7 +168,12 @@ def initialAction(block: SlurmBlock):
     scaler = block.variables.get("scaler", "robust")
     variance_threshold = block.variables.get("variance_threshold", 0.0)
     plot = block.variables.get("plot", True)
-
+    outliers = block.variables.get("outliers", None)
+    sheet_name = block.variables.get("sheet_name", None)
+    if outliers:
+        if not os.path.exists(outliers):
+            raise Exception(f"The outliers file does not exist: {outliers}")
+        outliers = block.remote.sendData(outliers, block.remote.workDir)
     # Outputs
     excel_selection = block.variables.get("excel_out", "training_features/selected_features.xlsx")
     block.extraData["excel_selection"] = excel_selection
@@ -172,6 +192,10 @@ def initialAction(block: SlurmBlock):
     command += f"-se {seed} "
     command += f"-n {num_threads} "
     command += f"-e {excel_selection} "
+    if outliers:
+        command += f"-ot {outliers} "
+    if sheet_name:
+        command += f"-sh {sheet_name} "
 
     jobs = [command]
 
