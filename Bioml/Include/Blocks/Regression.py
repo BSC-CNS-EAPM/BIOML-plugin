@@ -263,12 +263,15 @@ def runRegressionBioml(block: SlurmBlock):
     optimize = block.inputs.get("optimize", "RMSE")
     tune = block.inputs.get("tune", True)
     
-    input_label_string = block.inputs.get("input_label_string", None)
-    input_label_file = block.inputs.get("input_label_file", None)
-    
-    if input_label_file is None and input_label_string is None:
+    if block.selectedInputGroup == "input_label_string":
+        input_label = block.inputs.get("input_label_string", None)
+    else:
+        input_label = block.inputs.get("input_label_file", None)
+        file = True
+
+    if input_label is None:
         raise Exception("No input label provided")
-    if not os.path.exists(input_label_file):
+    if file and not os.path.exists(input_label):
         raise Exception(f"The input label file does not exist: {input_label}")
 
     ## other varibales
@@ -300,7 +303,8 @@ def runRegressionBioml(block: SlurmBlock):
     # Create an copy the inputs
     folderName = "savemodel_inputs"
     os.makedirs(folderName, exist_ok=True)
-    os.system(f"cp {input_label} {folderName}")
+    if file:
+        os.system(f"cp {input_label} {folderName}")
     os.system(f"cp {training_features} {folderName}")
     if cluster:
         if not os.path.exists(cluster):
@@ -313,8 +317,11 @@ def runRegressionBioml(block: SlurmBlock):
     
     ## Command
     command = "python -m BioML.models.save_models "
-    command += f"-l {folderName}/{input_label} "
-    command += f"-i {folderName}/{training_features} "
+    if not file:
+        command += f"-l {input_label} "
+    else:
+        command += f"-l {folderName}/{Path(input_label).name} "
+    command += f"-i {folderName}/{Path(training_features).name} "
     command += f"-sc {scaler} "
     command += f"-o {training_output} "
     command += f"-k {kfold_parameters} "
