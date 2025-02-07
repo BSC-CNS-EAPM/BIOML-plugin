@@ -25,6 +25,10 @@ def createPlugin():
     from Blocks.FeatureExtraction import featureExtractionBlock  # type: ignore
 
     biomlPlugin.addBlock(featureExtractionBlock)
+    
+    from Blocks.Finetuning import FinetuningBlock  # type: ignore
+
+    biomlPlugin.addBlock(FinetuningBlock)
 
     from Blocks.FeatureSelection import featureSelectionBlock  # type: ignore
 

@@ -21,7 +21,7 @@ fastaFile = PluginVariable(
     description="The fasta file path.",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=[".fasta", ".fsa"],
+    allowedValues=["fasta", "fsa"],
 )
 
 # ==========================#
