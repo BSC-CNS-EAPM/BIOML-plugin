@@ -186,8 +186,12 @@ def runPredictionBioml(block: SlurmBlock):
     os.system(f"cp {test_features} {folderName}")
     os.system(f"cp -r {model_path} {folderName}")
     if outliers_train:
+        if not os.path.exists(outliers_train):
+            raise Exception(f"The outliers train file does not exist: {outliers_train}")
         os.system(f"cp {outliers_train} {folderName}")
     if outliers_test:
+        if not os.path.exists(outliers_test):
+            raise Exception(f"The outliers test file does not exist: {outliers_test}")
         os.system(f"cp {outliers_test} {folderName}")
 
     # Run the command

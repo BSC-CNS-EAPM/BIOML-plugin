@@ -16,7 +16,7 @@ inputCsv = PluginVariable(
     type=VariableTypes.FILE,
 )
 
-inputLables = PluginVariable(
+inputLabels = PluginVariable(
     name="Input labels",
     id="in_labels",
     description="The label file or column name if label already in features",
@@ -155,7 +155,7 @@ def initialAction(block: SlurmBlock):
     plot = block.variables.get("plot", True)
 
     # Outputs
-    excel_selection = block.outputs.get("excel_out", None)
+    excel_selection = block.variables.get("excel_out", "training_features/selected_features.xlsx")
     block.extraData["excel_selection"] = excel_selection
 
     command = "python -m BioML.features.selection "

@@ -105,7 +105,7 @@ LLMConfig = PluginVariable(
     description="The config file to use for LLM model in json or yaml format",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=[".json", ".yaml"],
+    allowedValues=["json", "yaml"],
 )
 
 TokenizerConfig = PluginVariable(
@@ -114,7 +114,7 @@ TokenizerConfig = PluginVariable(
     description="The config file to use for Tokenizer in json or yaml format",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=[".json", ".yaml"],
+    allowedValues=["json", "yaml"],
 )
 
 pretrainedConfig = PluginVariable(
@@ -123,7 +123,7 @@ pretrainedConfig = PluginVariable(
     description="The config file to use for AutoModel.from_pretrained function in json or yaml format",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=[".json", ".yaml"],
+    allowedValues=["json", "yaml"],
 )
 
 def GenerateEmbeddings(block: SlurmBlock):

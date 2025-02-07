@@ -30,9 +30,9 @@ def createPlugin():
 
     biomlPlugin.addBlock(featureSelectionBlock)
 
-    from Blocks.ModelTraining import modelTrainingBlock  # type: ignore
+    from Blocks.ModelTraining import SaveModelBlock  # type: ignore
 
-    biomlPlugin.addBlock(modelTrainingBlock)
+    biomlPlugin.addBlock(SaveModelBlock)
 
     from Blocks.Outliers import outliersBlock  # type: ignore
 
