@@ -14,6 +14,7 @@ inputCsv = PluginVariable(
     id="in_csv",
     description="The CSV file with the input features",
     type=VariableTypes.FILE,
+    allowedValues=["csv"],
 )
 
 inputLabels = PluginVariable(

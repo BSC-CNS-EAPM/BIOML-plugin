@@ -140,13 +140,13 @@ classificationGroup = VariableGroup(
     id="classification_input",
     name="Input Classification",
     description="The input for classification problems",
-    variables=[inputLabels, trainingFeatures, SelectedClassification, tuneVar, optimizeClassifciation],
+    variables=[inputLabels, trainingFeatures, SelectedClassification, optimizeClassifciation],
 )
 RegressionGroup = VariableGroup(
     id="regression_input",
     name="Input Regression",
     description="The input for regression problems",
-    variables=[inputLabels, trainingFeatures, selectedRegression, tuneVar, optimizeRegression],
+    variables=[inputLabels, trainingFeatures, selectedRegression, optimizeRegression],
 )
 
 
@@ -312,7 +312,7 @@ def runSaveModelBioml(block: SlurmBlock):
     if os.path.exists(input_label):
         file = True
 
-    tune = block.inputs.get("tune", True)
+    tune = block.variables.get("tune", True)
     
     training_features = block.inputs.get("training_features", None)
     if training_features is None:
@@ -430,11 +430,11 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 SaveModelBlock = SlurmBlock(
-    name="Classification",
-    id="classification",
+    name="Save Models",
+    id="save_models",
     initialAction=runSaveModelBioml,
     finalAction=finalAction,
-    description="Train classification models.",
+    description="Save models.",
     inputGroups=[classificationGroup, RegressionGroup],
     variables=BSC_JOB_VARIABLES
     + [ # Add the variables here
@@ -452,7 +452,7 @@ SaveModelBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        numThreads
+        numThreads, tuneVar
     ],
     outputs=[outputModel],
 )
