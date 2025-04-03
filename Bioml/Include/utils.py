@@ -1,4 +1,7 @@
 # TODO needs a database
+
+from HorusAPI import PluginBlock, PluginVariable, SlurmBlock, VariableList, VariableTypes
+
 def pssm_generation(
     input_file,
     output_database="../data/whole_sequence",
