@@ -22,7 +22,7 @@ from HorusAPI import (
 inputLabelFile = PluginVariable(
     name="Input Label File",
     id="input_label_file",
-    description="The path to the labels of the training set in a csv format or string if it is inside training features.",
+    description="The path to the labels of the training set in a csv format",
     type=VariableTypes.FILE,
     defaultValue=None,
     allowedValues=["csv"],
@@ -30,7 +30,7 @@ inputLabelFile = PluginVariable(
 inputLabelString = PluginVariable(
     name="Input Label String",
     id="input_label_string",
-    description="The labels of the training set in a string format.",
+    description="The labels of the training set, if it is in the same file as the training features",
     type=VariableTypes.STRING,
     defaultValue=None,
 )

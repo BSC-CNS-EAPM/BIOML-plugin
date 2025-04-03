@@ -39,6 +39,7 @@ outputSelection = PluginVariable(
     id="out_zip",
     description="The features extracted",
     type=VariableTypes.FILE,
+    allowedValues=["xlsx"]
 )
 
 excelSelection = PluginVariable(
