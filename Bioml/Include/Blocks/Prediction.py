@@ -156,6 +156,7 @@ def runPredictionBioml(block: SlurmBlock):
     input_label = block.variables.get("in_label", None)
     if input_label is None:
         raise Exception("No input label provided")
+    file = False
     if os.path.exists(input_label):
         file = True
     
@@ -222,9 +223,9 @@ def runPredictionBioml(block: SlurmBlock):
     else:
         command += f"--label {folderName}/{Path(input_label).name} "
     if outliers_test:
-        command += f"--outliers_test {folderName}/{Path(outliers_train).name} "
+        command += f"--outliers_test {folderName}/{Path(outliers_test).name} "
     if outliers_train:
-        command += f"--outliers_train {folderName}/{Path(outliers_test).name} "
+        command += f"--outliers_train {folderName}/{Path(outliers_train).name} "
 
     command += f"--res_dir {prediction_output} "
 

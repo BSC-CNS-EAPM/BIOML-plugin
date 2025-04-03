@@ -84,7 +84,7 @@ scalerVar = PluginVariable(
     name="Scaler",
     id="scaler",
     description="The scaler to use.",
-    type=VariableTypes.STRING,
+    type=VariableTypes.STRING_LIST,
     defaultValue="robust",
     allowedValues=["robust", "standard", "minmax"],
 )

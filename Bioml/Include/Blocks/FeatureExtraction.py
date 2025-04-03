@@ -55,7 +55,8 @@ outputFeatures = PluginVariable(
     name="Extracted features",
     id="extracted_feat",
     description="The extracted features in csv file format",
-    type=VariableTypes.FILE
+    type=VariableTypes.FILE,
+    allowedValues=["csv"],
 )
 
 ##############################
@@ -66,18 +67,7 @@ inputPSSM = PluginVariable(
     name="PSSM dir input",
     id="pssm_dir",
     description="The path to the folder with the PSSM files",
-    type=VariableTypes.STRING,
-)
-
-
-
-
-possumProgram = PluginVariable(
-    name="possum program",
-    id="possum_dir",
-    description="The path to the possum program directory, it should be the remote path",
-    type=VariableTypes.STRING,
-    defaultValue="POSSUM_Toolkit/",
+    type=VariableTypes.FOLDER,
 )
 
 LongCommand = PluginVariable(

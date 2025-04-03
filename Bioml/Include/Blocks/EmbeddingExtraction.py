@@ -61,8 +61,9 @@ Mode = PluginVariable(
     id="mode",
     description="""Append or write: Whether to write all the embeddings 
                     at once or one batch at the time""",
-    type=VariableTypes.STRING,
+    type=VariableTypes.STRING_LIST,
     defaultValue="append",
+    allowedValues=["append", "write"],
 )
 
 batchSize = PluginVariable(
@@ -85,7 +86,7 @@ Option = PluginVariable(
     name="Option",
     id="option",
     description="The option to concatenate the embeddings.",
-    type=VariableTypes.STRING,
+    type=VariableTypes.STRING_LIST,
     defaultValue="mean",
     allowedValues=["mean", "sum", "max", "flatten"],
 )
@@ -94,7 +95,7 @@ Format = PluginVariable(
     name="Format",
     id="format",
     description="The format to use.",
-    type=VariableTypes.STRING,
+    type=VariableTypes.STRING_LIST,
     defaultValue="csv",
     allowedValues=["csv", "parquet"],
 )

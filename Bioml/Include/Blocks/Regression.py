@@ -62,13 +62,13 @@ fileGroup = VariableGroup(
     id="fileType_input",
     name="Input File",
     description="The input is a file",
-    variables=[inputLabelFile, trainingFeatures, tuneVar, optimizeVar],
+    variables=[inputLabelFile, trainingFeatures],
 )
 stringGroup = VariableGroup(
     id="stringType_input",
     name="Input String",
     description="The input is a string",
-    variables=[inputLabelString, trainingFeatures, tuneVar, optimizeVar],
+    variables=[inputLabelString, trainingFeatures],
 )
 
 # ==========================#
@@ -84,6 +84,14 @@ outputRegression = PluginVariable(
 ##############################
 #       Other variables      #
 ##############################
+iterateFeatures = PluginVariable(
+    name="Iterate Multiple Features",
+    id="iterate_features",
+    description="If to iterate over multiple features.",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=False,
+)
+
 trainingOutput = PluginVariable(
     name="Training Output",
     id="training_output",
@@ -260,11 +268,19 @@ def runRegressionBioml(block: SlurmBlock):
     if not os.path.exists(training_features):
         raise Exception(f"The input features file does not exist: {training_features}")
 
-    optimize = block.inputs.get("optimize", "RMSE")
-    tune = block.inputs.get("tune", True)
+    optimize = block.variables.get("optimize", "RMSE")
+    tune = block.variables.get("tune", True)
+
+    iterate_features = block.variables.get("iterate_features", False)
+    if iterate_features and not training_features.endswith(".xlsx"):
+        raise Exception(
+            "The iterate features option is only available for excel files."
+        )
+    
     
     if block.selectedInputGroup == "input_label_string":
         input_label = block.inputs.get("input_label_string", None)
+        file = False
     else:
         input_label = block.inputs.get("input_label_file", None)
         file = True
@@ -316,7 +332,7 @@ def runRegressionBioml(block: SlurmBlock):
         os.system(f"cp {outliers} {folderName}")
     
     ## Command
-    command = "python -m BioML.models.save_models "
+    command = "python -m BioML.models.regression "
     if not file:
         command += f"-l {input_label} "
     else:
@@ -333,6 +349,8 @@ def runRegressionBioml(block: SlurmBlock):
     command += f"-be {best_models} "
     command += f"-op {optimize} "
     
+    if iterate_features:
+        command += f"-it "
     if plot:
         command += f"-p {' '.join(plot)} "
     if drop:
@@ -420,7 +438,7 @@ regressionBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        numThreads
+        numThreads, tuneVar, optimizeVar
         
     ],
     outputs=[outputRegression],

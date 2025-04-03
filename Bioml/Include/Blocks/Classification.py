@@ -72,13 +72,13 @@ fileGroup = VariableGroup(
     id="fileType_input",
     name="Input File",
     description="The input is a file",
-    variables=[inputLabelFile, trainingFeatures, tuneVar, optimizeVar],
+    variables=[inputLabelFile, trainingFeatures],
 )
 stringGroup = VariableGroup(
     id="stringType_input",
     name="Input String",
     description="The input is a string",
-    variables=[inputLabelString, trainingFeatures, tuneVar, optimizeVar],
+    variables=[inputLabelString, trainingFeatures],
 )
 
 # ==========================#
@@ -94,6 +94,22 @@ outputClassification = PluginVariable(
 ##############################
 #       Other variables      #
 ##############################
+stratifiedVar = PluginVariable(
+    name="Stratified",
+    id="stratified",
+    description="If to use stratified sampling.",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=True,
+)
+
+iterateFeatures = PluginVariable(
+    name="Iterate Multiple Features",
+    id="iterate_features",
+    description="If to iterate over multiple features.",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=False,
+)
+
 trainingOutput = PluginVariable(
     name="Training Output",
     id="training_output",
@@ -322,8 +338,8 @@ def runClassificationBioml(block: SlurmBlock):
     if not os.path.exists(training_features):
         raise Exception(f"The input features file does not exist: {training_features}")
 
-    optimize = block.inputs.get("optimize", "MCC")
-    tune = block.inputs.get("tune", True)
+    optimize = block.variables.get("optimize", "MCC")
+    tune = block.variables.get("tune", True)
     
     if block.selectedInputGroup == "input_label_string":
         input_label = block.inputs.get("input_label_string", None)
@@ -338,6 +354,13 @@ def runClassificationBioml(block: SlurmBlock):
         raise Exception(f"The input label file does not exist: {input_label}")
 
     ## other varibales
+    stratified = block.variables.get("stratified", True)
+    iterate_features = block.variables.get("iterate_features", False)
+    if iterate_features and not training_features.endswith(".xlsx"):
+        raise Exception(
+            "The iterate features option is only available for excel files."
+        )
+    
     sheets = block.variables.get("sheet_name", None)
     seed = block.variables.get("seed", 63462634)
     num_Iter = block.variables.get("num_iter", 30)
@@ -381,7 +404,7 @@ def runClassificationBioml(block: SlurmBlock):
         os.system(f"cp {outliers} {folderName}")
     
     ## Command
-    command = "python -m BioML.models.save_models "
+    command = "python -m BioML.models.classification "
     if not file:
         command += f"-l {input_label} "
     else:
@@ -400,7 +423,11 @@ def runClassificationBioml(block: SlurmBlock):
     command += f"-op {optimize} "
     command += f"-pw {precision_weight} "
     command += f"-rw {recall_weight} "
-    
+
+    if iterate_features:
+        command += f"-it "
+    if stratified:
+        command += f"-ti "
     if plot:
         command += f"-p {' '.join(plot)} "
     if drop:
@@ -491,7 +518,9 @@ classificationBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        numThreads,
+        numThreads, tuneVar, optimizeVar,
+        iterateFeatures,
+        stratifiedVar,
     ],
     outputs=[outputClassification],
 )
