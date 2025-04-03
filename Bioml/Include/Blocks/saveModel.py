@@ -26,10 +26,10 @@ inputLabels = PluginVariable(
     type=VariableTypes.STRING,
 )
 
-SelectedClassification = PluginVariable(
+selectedClassification = PluginVariable(
     name="Selected Models Classification",
     id="selected_models_classification",
-    description="The classification models to train and save.",
+    description="The classification models to train and save, it can be multiple, if it is an ensemble model",
     type=VariableTypes.CHECKBOX,
     defaultValue=None,
     allowedValues=[
@@ -58,7 +58,7 @@ SelectedClassification = PluginVariable(
 selectedRegression = PluginVariable(
     name="Selected Models Regression",
     id="selected_models_regression",
-    description="The regression models to train and save.",
+    description="The regression models to train and save, it can be multiple, if it is an ensemble model",
     type=VariableTypes.CHECKBOX,
     defaultValue=None,
     allowedValues=['lr',
@@ -127,7 +127,6 @@ trainingFeatures = PluginVariable(
     allowedValues=["csv", "xlsx"],
 )
 
-
 tuneVar = PluginVariable(
     name="Tune",
     id="tune",
@@ -136,19 +135,13 @@ tuneVar = PluginVariable(
     defaultValue=True,
 )
 
-classificationGroup = VariableGroup(
-    id="classification_input",
-    name="Input Classification",
-    description="The input for classification problems",
-    variables=[inputLabels, trainingFeatures, SelectedClassification, optimizeClassifciation],
+Problem = PluginVariable(
+    name="classification or regression",
+    id="problem",
+    description="The machine learning problem: classification or regression",
+    type=VariableTypes.STRING,
+    allowedValues=["classification", "regression"],
 )
-RegressionGroup = VariableGroup(
-    id="regression_input",
-    name="Input Regression",
-    description="The input for regression problems",
-    variables=[inputLabels, trainingFeatures, selectedRegression, optimizeRegression],
-)
-
 
 # ==========================#
 # Variable outputs
@@ -213,9 +206,17 @@ outliersVar = PluginVariable(
 ModelStrategy = PluginVariable(
     name="Model Strategy",
     id="model_strategy",
-    description="The strategy to select the best models. Majority, stacking or simple:0 (single models), the 0 indicate the index in the list of models.",
+    description="The strategy to select the best models. majority, stacking or simple:0 (single models), the 0 indicate the index in the list of models.",
     type=VariableTypes.STRING,
     defaultValue="simple:0",
+)
+
+bestModels = PluginVariable(
+    name="Best Models",
+    id="best_models",
+    description="The number of best models to select, it affects the analysis and the saved hyperparameters.",
+    type=VariableTypes.INTEGER,
+    defaultValue=3,
 )
 
 sheetName = PluginVariable(
@@ -291,19 +292,18 @@ greaterVar = PluginVariable(
 def runSaveModelBioml(block: SlurmBlock):
     from pathlib import Path
     ## inputs
-    
-    if block.selectedInputGroup == classificationGroup.id:
-        problem = "classification"
-        selected_models = block.inputs.get("selected_models_classification", None)
-        optimize = block.inputs.get("optimize_classification", "MCC")
+    problem = block.inputs.get("problem", None)
 
-    elif block.selectedInputGroup == RegressionGroup.id:
-        problem = "regression"
-        selected_models = block.inputs.get("selected_models_regression", None)
-        optimize = block.inputs.get("optimize_regression", "RMSE")
-        
+    if problem == "classification":
+        selected_models = block.variables.get("selected_models_classification", None)
+        optimize = block.variables.get("optimize_classification", "MCC")
+
+    elif problem == "regression":
+        selected_models = block.variables.get("selected_models_regression", None)
+        optimize = block.variables.get("optimize_regression", "RMSE")
+
     else:
-        raise ValueError("No input selected")
+        raise Exception("No problem provided")
     
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
@@ -339,6 +339,7 @@ def runSaveModelBioml(block: SlurmBlock):
     outliers = block.variables.get("outliers", None)
     model_strategy = block.variables.get("model_strategy", "simple:0")
     num_threads = block.variables.get("num_threads", 20)
+    best_models = block.variables.get("best_models", 3)
     
     # outputs
     model_output = block.variables.get("model_dirname", "models")
@@ -375,6 +376,7 @@ def runSaveModelBioml(block: SlurmBlock):
     command += f"-se {' '.join(selected_models)} "
     command += f"-op {optimize} "
     command += f"-p {problem} "
+    command += f"-bm {best_models} "
 
     if not shuffle:
         command += f"-sf "
@@ -435,7 +437,7 @@ SaveModelBlock = SlurmBlock(
     initialAction=runSaveModelBioml,
     finalAction=finalAction,
     description="Save models.",
-    inputGroups=[classificationGroup, RegressionGroup],
+    inputs=[inputLabels, trainingFeatures, Problem],
     variables=BSC_JOB_VARIABLES
     + [ # Add the variables here
         ModelDir,
@@ -452,7 +454,13 @@ SaveModelBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        numThreads, tuneVar
+        numThreads, tuneVar,
+        selectedRegression,
+        selectedClassification,
+        optimizeClassifciation,
+        optimizeRegression,
+        bestModels,
+        ModelStrategy,
     ],
     outputs=[outputModel],
 )

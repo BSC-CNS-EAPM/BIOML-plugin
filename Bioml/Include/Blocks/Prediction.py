@@ -83,6 +83,14 @@ predictionOutput = PluginVariable(
     defaultValue="prediction_results",
 )
 
+numThreads = PluginVariable(
+    name="Number of threads",
+    id="num_threads",
+    description="The number of threads to use.",
+    type=VariableTypes.INTEGER,
+    defaultValue=20,
+)
+
 scalerVar = PluginVariable(
     name="Scaler",
     id="scaler",
@@ -185,7 +193,7 @@ def runPredictionBioml(block: SlurmBlock):
     outliers_train = block.variables.get("outliers_train", None)
     outliers_test = block.variables.get("outliers_test", None)
     prediction_output = block.variables.get("prediction_dir", "prediction_results")
-    
+    num_threads = block.variables.get("num_threads", 20)
     folderName = "prediction_inputs"
 
     # Create an copy the inputs
@@ -233,7 +241,8 @@ def runPredictionBioml(block: SlurmBlock):
 
 
     block.extraData["prediction_dir"] = prediction_output
-
+    block.variables["cpus"] = num_threads
+    
     from utils import launchCalculationAction
 
     launchCalculationAction(
