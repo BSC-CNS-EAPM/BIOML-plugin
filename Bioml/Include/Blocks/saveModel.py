@@ -308,6 +308,7 @@ def runSaveModelBioml(block: SlurmBlock):
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
         raise Exception("No input label provided")
+    file = False
     if os.path.exists(input_label):
         file = True
 
@@ -421,7 +422,7 @@ def finalAction(block: SlurmBlock):
 
     downloaded_path = downloadResultsAction(block)
 
-    folder_name = block.variables.get("model_output")
+    folder_name = block.variables.get("model_output", "")
 
     block.setOutput(outputModel.id, Path(downloaded_path)/folder_name)
 
@@ -429,7 +430,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 SaveModelBlock = SlurmBlock(
-    name="Classification BioML",
+    name="Classification",
+    id="classification",
     initialAction=runSaveModelBioml,
     finalAction=finalAction,
     description="Train classification models.",

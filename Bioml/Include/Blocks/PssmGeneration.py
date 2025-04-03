@@ -21,25 +21,9 @@ fastaFile = PluginVariable(
     description="The fasta file path.",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=[".fasta", ".fsa"],
+    allowedValues=["fasta", "fsa"],
 )
 
-possumProgram = PluginVariable(
-    name="possum program",
-    id="possum_dir",
-    description="The path to the possum program directory, it should be the remote path",
-    type=VariableTypes.STRING,
-    defaultValue="POSSUM_Toolkit/",
-)
-
-databaseInput = PluginVariable(
-    name="database input",
-    id="dbin",
-    description="""The path to database fasta file, it should already be in remote, so use the remote path, 
-    even if it is a fasta file you want to create the database from""",
-    type=VariableTypes.STRING,
-    defaultValue=None,
-)
 # ==========================#
 # Variable outputs
 # ==========================#
@@ -55,6 +39,7 @@ outputFasta = PluginVariable(
     id="out_fasta",
     description="The path to the fixed fasta file",
     type=VariableTypes.FILE,
+    allowedValues=["fasta", "fsa"]
 )
 
 
@@ -121,8 +106,8 @@ def runGeneratePSSMBioml(block: SlurmBlock):
     
     input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
     
-    possum_program_dir = block.inputs.get("possum_dir", None)
-    database_input = block.inputs.get("database_input", None)
+    possum_program_dir = block.config.get("possum_dir", None)
+    database_input = block.config.get("database_input", None)
     if database_input is None:
         raise Exception("No input database provided")
    
@@ -185,11 +170,12 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 generatePSSMBlock = SlurmBlock(
-    name="Outlier BioMl",
+    name="PSSM Generation",
+    id="generate_pssm",
     initialAction=runGeneratePSSMBioml,
     finalAction=finalAction,
     description="Outlier detection.",
-    inputs=[fastaFile, possumProgram, databaseInput],
+    inputs=[fastaFile],
     variables=BSC_JOB_VARIABLES
     + [numThreads,
         iteraTions,

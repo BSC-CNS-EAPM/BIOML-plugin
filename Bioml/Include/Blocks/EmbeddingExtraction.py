@@ -31,7 +31,7 @@ fastaFile = PluginVariable(
 outputEmbedding = PluginVariable(
     name="output embedding",
     id="out_embedding",
-    description="The path to the emebedding file in csv or parquet format",
+    description="The path to the embedding file in csv or parquet format",
     type=VariableTypes.FILE,
 )
 
@@ -85,7 +85,7 @@ Option = PluginVariable(
     name="Option",
     id="option",
     description="The option to concatenate the embeddings.",
-    type=VariableTypes.STRING_LIST,
+    type=VariableTypes.STRING,
     defaultValue="mean",
     allowedValues=["mean", "sum", "max", "flatten"],
 )
@@ -94,7 +94,7 @@ Format = PluginVariable(
     name="Format",
     id="format",
     description="The format to use.",
-    type=VariableTypes.STRING_LIST,
+    type=VariableTypes.STRING,
     defaultValue="csv",
     allowedValues=["csv", "parquet"],
 )
@@ -209,7 +209,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 EmbeddingBlock = SlurmBlock(
-    name="Embeddings BioMl",
+    name="Embeddings",
+    id="embeddings",
     initialAction=GenerateEmbeddings,
     finalAction=finalAction,
     description="Generate LLM embeddings",

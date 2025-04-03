@@ -327,6 +327,7 @@ def runClassificationBioml(block: SlurmBlock):
     
     if block.selectedInputGroup == "input_label_string":
         input_label = block.inputs.get("input_label_string", None)
+        file=False
     else:
         input_label = block.inputs.get("input_label_file", None)
         file = True
@@ -459,7 +460,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 classificationBlock = SlurmBlock(
-    name="Classification BioML",
+    name="Classification",
+    id="classification",
     initialAction=runClassificationBioml,
     finalAction=finalAction,
     description="Train classification models.",

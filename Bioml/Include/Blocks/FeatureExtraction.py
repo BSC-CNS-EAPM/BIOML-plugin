@@ -70,13 +70,7 @@ inputPSSM = PluginVariable(
 )
 
 
-ifeatureDir = PluginVariable(
-    name="Ifeature dir",
-    id="ifeature_dir",
-    description="The path to iFeature program, it should be the remote path",
-    type=VariableTypes.STRING,
-    defaultValue="iFeature",
-)
+
 
 possumProgram = PluginVariable(
     name="possum program",
@@ -90,7 +84,7 @@ LongCommand = PluginVariable(
     name="Long commands",
     id="long_command",
     description="If restarting the programs using only those that takes longer times (because the others have already finished)",
-    type=VariableTypes.BOOL,
+    type=VariableTypes.BOOLEAN,
     defaultValue=False,
 )
 
@@ -163,7 +157,7 @@ def initialAction(block: SlurmBlock):
     from pathlib import Path
     ## inputs
     input_fasta = block.inputs.get("fasta_file", None)
-    input_pssm = block.variables.get("pssm_dir", None)
+    input_pssm = block.inputs.get("pssm_dir", None)
     purpose = block.variables.get("purpose", ["extract", "read"])
     ## output folders
     outputposum = block.variables.get("possum_out", "possum_features")
@@ -176,8 +170,8 @@ def initialAction(block: SlurmBlock):
     drop_ifeature = block.variables.get("drop_ifeature", [])
     drop_possum = block.variables.get("drop_possum", [])
     long = block.variables.get("long_command", False)
-    possum_program = block.variables.get("possum_dir", "POSSUM_Toolkit/")
-    ifeature_program = block.variables.get("ifeature_dir", "iFeature")
+    possum_program = block.config.get("possum_dir", "POSSUM_Toolkit/")
+    ifeature_program = block.config.get("ifeature_dir", "iFeature")
     omega_type = block.variables.get("omega_type", None)
     
 
@@ -246,12 +240,13 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 featureExtractionBlock = SlurmBlock(
-    name="Feature Extraction BioML",
+    name="Feature Extraction",
+    id="feature_extraction",
     initialAction=initialAction,
     finalAction=finalAction,
     description="Feature Extraction.",
-    inputs=[inputFasta],
-    variables=BSC_JOB_VARIABLES + [inputPSSM, Purpose, possumProgram, ifeatureDir, 
+    inputs=[inputFasta, inputPSSM],
+    variables=BSC_JOB_VARIABLES + [Purpose,
                                    OmegaType, dropPossum, dropIFeature, 
                                    LongCommand, numThreads, Run, outputPossum,
                                    outputIfeature, outputExtraction],

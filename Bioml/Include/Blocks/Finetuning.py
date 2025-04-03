@@ -220,7 +220,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 FinetuningBlock = SlurmBlock(
-    name="Finetuning BioMl",
+    name="Finetuning",
+    id="finetuning",
     initialAction=Finetune,
     finalAction=finalAction,
     description="Finetune a LLM model",

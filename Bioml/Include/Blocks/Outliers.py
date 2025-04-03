@@ -16,12 +16,12 @@ from HorusAPI import (
 # Variable inputs
 # ==========================#
 excelFile = PluginVariable(
-    name="Excel file",
-    id="excel_file",
-    description="The file to where the selected features are saved in excel format.",
+    name="Input features",
+    id="input_file",
+    description="The file to where the selected features are saved in excel or csv format.",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=["xlsx"],
+    allowedValues=["csv", "xlsx"],
 )
 
 
@@ -100,7 +100,7 @@ def runOutliersBioml(block: SlurmBlock):
     block.variables["script_name"] = "outliers.sh"
     
     command = "python -m BioML.utilities.outlier "
-    command += f"--excel {input_excel} "
+    command += f"-i {input_excel} "
     command += f"-c {contamination} "
     command += f"-s {scaler} "
     command += f"-n {num_threads} "
@@ -131,7 +131,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 outliersBlock = SlurmBlock(
-    name="Outlier BioMl",
+    name="Outlier",
+    id="outliers",
     initialAction=runOutliersBioml,
     finalAction=finalAction,
     description="Outlier detection.",

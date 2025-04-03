@@ -1,5 +1,9 @@
 {
     "cSpell.words": [
         "bioml"
-    ]
+    ],
+    "python.analysis.extraPaths": [
+        "Bioml/Include"
+    ],
+    "python.analysis.typeCheckingMode": "standard"
 }

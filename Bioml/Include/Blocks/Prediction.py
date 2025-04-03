@@ -258,7 +258,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 PredictBlock = SlurmBlock(
-    name="Predict BioMl",
+    name="Predict",
+    id="predict",
     initialAction=runPredictionBioml,
     finalAction=finalAction,
     description="Predict using the models and average the votations.",

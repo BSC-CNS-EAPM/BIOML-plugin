@@ -24,10 +24,10 @@ inputLabels = PluginVariable(
 )
 
 Problem = PluginVariable(
-    name="The machine learning problem",
+    name="classification or regression",
     id="problem",
     description="The machine learning problem: classification or regression",
-    type=VariableTypes.STRING_LIST,
+    type=VariableTypes.STRING,
     allowedValues=["classification", "regression"],
 )
 
@@ -117,7 +117,7 @@ Plot = PluginVariable(
     name="plot",
     id="plot",
     description="Default to true, plot the feature importance using shap",
-    type=VariableTypes.BOOL,
+    type=VariableTypes.BOOLEAN,
     defaultValue=True,
 )
 
@@ -224,7 +224,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 featureSelectionBlock = SlurmBlock(
-    name="Feature Selection BioML",
+    name="Feature Selection",
+    id="feature_selection",
     initialAction=initialAction,
     finalAction=finalAction,
     description="Feature Selection.",

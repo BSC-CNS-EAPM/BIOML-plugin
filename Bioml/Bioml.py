@@ -34,7 +34,7 @@ def createPlugin():
 
     biomlPlugin.addBlock(featureSelectionBlock)
 
-    from Blocks.ModelTraining import SaveModelBlock  # type: ignore
+    from Blocks.saveModel import SaveModelBlock  # type: ignore
 
     biomlPlugin.addBlock(SaveModelBlock)
 
@@ -53,6 +53,10 @@ def createPlugin():
     from Blocks.EmbeddingExtraction import EmbeddingBlock  # type: ignore
 
     biomlPlugin.addBlock(EmbeddingBlock)
+
+    from config import BIOML_CONFIG
+    
+    biomlPlugin.addConfig(BIOML_CONFIG)
 
     # Return the plugin
     return biomlPlugin

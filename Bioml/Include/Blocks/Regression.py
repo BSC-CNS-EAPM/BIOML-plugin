@@ -392,7 +392,8 @@ def finalAction(block: SlurmBlock):
 from utils import BSC_JOB_VARIABLES
 
 regressionBlock = SlurmBlock(
-    name="Regression BioML",
+    name="Regression",
+    id="regression",
     initialAction=runRegressionBioml,
     finalAction=finalAction,
     description="Train regression models.",
