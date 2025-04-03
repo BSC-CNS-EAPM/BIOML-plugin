@@ -438,7 +438,8 @@ regressionBlock = SlurmBlock(
         greaterVar,
         shuffleVar,
         crossValidation,
-        numThreads, tuneVar, optimizeVar
+        numThreads, tuneVar, optimizeVar,
+        iterateFeatures,
         
     ],
     outputs=[outputRegression],
