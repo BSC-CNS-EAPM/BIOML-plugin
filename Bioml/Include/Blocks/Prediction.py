@@ -48,10 +48,10 @@ trainingFeatures = PluginVariable(
 )
 
 Problem = PluginVariable(
-    name="The machine learning problem",
+    name="classification or regression",
     id="problem",
     description="The machine learning problem: classification or regression",
-    type=VariableTypes.STRING_LIST,
+    type=VariableTypes.STRING,
     allowedValues=["classification", "regression"],
 )
 
@@ -117,7 +117,13 @@ outliersTest = PluginVariable(
 )
 
 
-
+testSheetName = PluginVariable(
+    name="Test Sheet Name",
+    id="test_sheet_name",
+    description="The sheet name for the excel file if the test features is in excel format.",
+    type=VariableTypes.STRING,
+    defaultValue=None,
+)
 
 sheetName = PluginVariable(
     name="Sheet Name",
@@ -148,11 +154,15 @@ def runPredictionBioml(block: SlurmBlock):
     from pathlib import Path
 
     #inputs
+    problem = block.inputs.get("problem", None)
+    if problem is None:
+        raise Exception("No problem provided")
     input_fasta = block.inputs.get("fasta_file", None)
-    if input_fasta is None:
-        raise Exception("No input fasta provided")
-    if not os.path.exists(input_fasta):
+    if input_fasta is None and problem == "classification":
+        raise Exception("No fasta file provided, it is required for classification")
+    if input_fasta and not os.path.exists(input_fasta):
         raise Exception(f"The input fasta file does not exist: {input_fasta}")
+    
     training_features = block.inputs.get("training_features", None)
     if training_features is None:
         raise Exception("No training features provided")
@@ -172,7 +182,7 @@ def runPredictionBioml(block: SlurmBlock):
     if test_features is None:
         raise Exception("No test features provided")
     if not os.path.exists(test_features):
-        raise Exception(f"The test features file does not exist: {test_features}")
+        raise Exception(f"The test features file does not exist: {test_features}")        
 
     model_path = block.inputs.get("model_path", None)
     if model_path is None:
@@ -180,14 +190,10 @@ def runPredictionBioml(block: SlurmBlock):
     if not os.path.exists(model_path):
         raise Exception(f"The model path does not exist: {model_path}")
     
-    problem = block.inputs.get("problem", None)
-    if problem is None:
-        raise Exception("No problem provided")
-
     ## Other variables
     scaler = block.variables.get("scaler", "zscore")
     sheets = block.variables.get("sheet_name", None)
-    
+    test_sheets = block.variables.get("test_sheet_name", None)
     num_similar_samples = block.variables.get("num_similar_samples", 1)
     applicability_domain = block.variables.get("applicability_domain", True)
     outliers_train = block.variables.get("outliers_train", None)
@@ -196,26 +202,35 @@ def runPredictionBioml(block: SlurmBlock):
     num_threads = block.variables.get("num_threads", 20)
     folderName = "prediction_inputs"
 
+    if test_features.endswith(".xlsx") and not test_sheets:
+        raise Exception(
+            "The test features is in excel format, please provide the sheet name"
+        )
+    if training_features.endswith(".xlsx") and not sheets:
+        raise Exception(
+            "The training features is in excel format, please provide the sheet name"
+        )
+
     # Create an copy the inputs
     os.makedirs(folderName, exist_ok=True)
-    os.system(f"cp {input_fasta} {folderName}")
+    if input_fasta:
+        os.system(f"cp {input_fasta} {folderName}")
     os.system(f"cp {training_features} {folderName}")
     os.system(f"cp {test_features} {folderName}")
     os.system(f"cp -r {model_path} {folderName}")
-    if outliers_train:
-        if not os.path.exists(outliers_train):
+    if outliers_train and not os.path.exists(outliers_train):
             raise Exception(f"The outliers train file does not exist: {outliers_train}")
-        os.system(f"cp {outliers_train} {folderName}")
-    if outliers_test:
-        if not os.path.exists(outliers_test):
+    os.system(f"cp {outliers_train} {folderName}")
+    if outliers_test and not os.path.exists(outliers_test):
             raise Exception(f"The outliers test file does not exist: {outliers_test}")
-        os.system(f"cp {outliers_test} {folderName}")
+    os.system(f"cp {outliers_test} {folderName}")
     if file:
         os.system(f"cp {input_label} {folderName}")
 
     # Run the command
     command = "python -m BioML.models.predict "
-    command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
+    if input_fasta:
+        command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
     command += f"--model_path {folderName}/{Path(model_path).name} "
     command += f"--training_features {folderName}/{Path(training_features).name} "
     command += f"--test_features {folderName}/{Path(test_features).name} "
@@ -234,6 +249,8 @@ def runPredictionBioml(block: SlurmBlock):
         command += f"--outliers_test {folderName}/{Path(outliers_test).name} "
     if outliers_train:
         command += f"--outliers_train {folderName}/{Path(outliers_train).name} "
+    if test_sheets:
+        command += f"-ts {test_sheets} "
 
     command += f"--res_dir {prediction_output} "
 
@@ -273,7 +290,7 @@ PredictBlock = SlurmBlock(
     initialAction=runPredictionBioml,
     finalAction=finalAction,
     description="Predict using the models and average the votations.",
-    inputs=[fastaFile, modelPath, testFeatures, trainingFeatures, Problem],
+    inputs=[modelPath, testFeatures, trainingFeatures, Problem],
     variables=BSC_JOB_VARIABLES + [
         scalerVar,
         sheetName,
@@ -283,7 +300,7 @@ PredictBlock = SlurmBlock(
         outliersTrain,
         outliersTest,
         predictionOutput,
-        
+        fastaFile, 
     ],
     outputs=[outputPrediction],
 )

@@ -4,7 +4,7 @@ Bioml Selection
     | Train classification models.
 """
 
-from HorusAPI import PluginVariable, SlurmBlock, VariableTypes
+from HorusAPI import PluginVariable, SlurmBlock, VariableTypes, Extensions
 
 # ==========================#
 # Variable inputs
@@ -46,7 +46,7 @@ outputSelection = PluginVariable(
 excelSelection = PluginVariable(
     name="excel output",
     id="excel_out",
-    description="The features extracted",
+    description="The files for the features extracted, should also contain the folder name for the excel file",
     type=VariableTypes.STRING,
     defaultValue="training_features/selected_features.xlsx",
 )
@@ -217,8 +217,23 @@ def initialAction(block: SlurmBlock):
 def finalAction(block: SlurmBlock):
     from pathlib import Path
     from utils import downloadResultsAction
+    e = Extensions()
+
     downloaded_path = downloadResultsAction(block)
     excel_selection = block.extraData["excel_selection"]
+    p = Path(downloaded_path)/ excel_selection
+
+    # the feature selection returns a shap_features plot and csv, then selected features excel
+    if (p.parent/"shap_importance.csv").exists():
+        e.loadCSV(p.parent/"shap_importance.csv", "shap_values")
+    
+    if (p.parent/"shap_features/feature_influence_on_model_prediction.png").exists():
+        e.loadImage(p.parent/"shap_features/feature_influence_on_model_prediction.png", "shap_plot")
+        try:
+            l = list((p.parent/"shap_features/").glob("shap_top_*.png"))[0]
+            e.loadImage(l, "shap_top_features")
+        except:
+            pass
 
     block.setOutput(outputSelection.id, Path(downloaded_path)/excel_selection)
 

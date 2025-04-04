@@ -1,5 +1,7 @@
 """
 A module that performs regression analysis on a dataset.
+| You will be able to visualize the training results and the plots
+| Train regression models.
 """
 
 import os
@@ -10,7 +12,7 @@ from HorusAPI import (
     VariableGroup,
     VariableList,
     VariableTypes,
-    
+    Extensions
 )
 
 # ==========================#
@@ -89,6 +91,14 @@ iterateFeatures = PluginVariable(
     name="Iterate Multiple Features",
     id="iterate_features",
     description="If to iterate over multiple features.",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=False,
+)
+
+logExperiments = PluginVariable(
+    name="Log Experiments",
+    id="log_experiments",
+    description="If to log the experiments.",
     type=VariableTypes.BOOLEAN,
     defaultValue=False,
 )
@@ -312,25 +322,29 @@ def runRegressionBioml(block: SlurmBlock):
     drop = block.variables.get("drop", ["tr", "kr", "ransac"])
     budget_time = block.variables.get("budget_time", None)
     num_threads = block.variables.get("num_threads", 100)
-    
+    log_experiments = block.variables.get("log_experiments", False)
+    if iterate_features:
+        log_experiments = False
     ## Create the output folder
     training_output = block.variables.get("training_output", "regression_results")
     block.extraData["output_folder"] = training_output
-    
+    block.extraData["iterate_features"] = iterate_features
+
     # Create an copy the inputs
     folderName = "savemodel_inputs"
     os.makedirs(folderName, exist_ok=True)
     if file:
         os.system(f"cp {input_label} {folderName}")
     os.system(f"cp {training_features} {folderName}")
-    if cluster:
-        if not os.path.exists(cluster):
+
+    if cluster and not os.path.exists(cluster):
             raise Exception(f"The cluster file does not exist: {cluster}")
-        os.system(f"cp {cluster} {folderName}")
-    if outliers:
-        if not os.path.exists(outliers):
+    os.system(f"cp {cluster} {folderName}")
+
+    if outliers and not os.path.exists(outliers):
             raise Exception(f"The outliers file does not exist: {outliers}")
-        os.system(f"cp {outliers} {folderName}")
+    
+    os.system(f"cp {outliers} {folderName}")
     
     ## Command
     command = "python -m BioML.models.regression "
@@ -376,6 +390,8 @@ def runRegressionBioml(block: SlurmBlock):
         command += f"--tune "
     if sheets:
         command += f"-sh {sheets} "
+    if log_experiments:
+        command += f"-log "
 
     jobs = [command]
 
@@ -399,11 +415,46 @@ def finalAction(block: SlurmBlock):
 
     from pathlib import Path
     from utils import downloadResultsAction
+    import pandas as pd
+    e = Extensions()
 
     download_path = downloadResultsAction(block)
 
+    iterate_features = block.extraData.get("iterate_features", False)
+
     output_folder = block.extraData.get("output_folder", "regression_results")
     FolderName = Path(download_path) / output_folder
+
+    if iterate_features:
+        if os.path.exists(FolderName / "training_features.xlsx"):
+            excel_sheets = pd.ExcelFile(FolderName / "training_features.xlsx").sheet_names
+            training_features = pd.read_excel(
+                FolderName / "training_features.xlsx", sheet_name=excel_sheets[:3], index_col=[0,1,2]
+            )
+            for num, (sheet, df) in enumerate(training_features.items()):
+                df.to_csv(FolderName / f"training_features_{sheet}.csv")
+                e.loadCSV(
+                    FolderName / f"training_features_{sheet}.csv",
+                    f"features_top{num}_{sheet}",
+                )
+    else:
+        if os.path.exists(FolderName / "model_plots"):
+            model_plots = Path(FolderName / "model_plots").glob("*/*/*.png")
+            for plot in model_plots:
+                if "tuned" in str(plot):
+                    continue
+                if "Confusion" in str(plot):
+                    continue
+                e.loadImage(str(plot), f"{plot.parents[1].name}_{plot.parent.name}_{plot.stem}")
+            results = pd.read_excel(
+                FolderName / "not_tuned" / "training_results.xlsx", sheet_name=["train", "test_results"], index_col=[0,1,2]
+            )
+            for num, (sheet, df) in enumerate(results.items()):
+                df.to_csv(FolderName / f"training_results_{sheet}.csv")
+                e.loadCSV(
+                    FolderName / f"training_results_{sheet}.csv",
+                    f"results_{sheet}",
+                )
 
     block.setOutput(outputRegression.id, FolderName)
 
@@ -440,7 +491,7 @@ regressionBlock = SlurmBlock(
         shuffleVar,
         crossValidation,
         numThreads, tuneVar, optimizeVar,
-        iterateFeatures,
+        iterateFeatures, logExperiments
         
     ],
     outputs=[outputRegression],

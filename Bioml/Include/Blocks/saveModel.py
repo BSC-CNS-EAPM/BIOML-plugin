@@ -206,7 +206,7 @@ outliersVar = PluginVariable(
 ModelStrategy = PluginVariable(
     name="Model Strategy",
     id="model_strategy",
-    description="The strategy to select the best models. majority, stacking or simple:0 (single models), the 0 indicate the index in the list of models.",
+    description="The strategy to select the best models. majority, stacking or simple:0 (single models), the 0 indicate the index in the list of models. The index can be up to best_models -1.",
     type=VariableTypes.STRING,
     defaultValue="simple:0",
 )
@@ -305,6 +305,9 @@ def runSaveModelBioml(block: SlurmBlock):
     else:
         raise Exception("No problem provided")
     
+    if not selected_models:
+        raise Exception("No selected models for the problem provided")
+    
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
         raise Exception("No input label provided")
@@ -315,16 +318,16 @@ def runSaveModelBioml(block: SlurmBlock):
     tune = block.variables.get("tune", True)
     
     training_features = block.inputs.get("training_features", None)
+    sheets = block.variables.get("sheet_name", None)
     if training_features is None:
         raise Exception("No training features provided")
     if not os.path.exists(training_features):
         raise Exception(f"The training features file does not exist: {training_features}")
 
-    if not selected_models:
-        raise Exception("No selected models")
+    if training_features.endswith(".xlsx") and not sheets:
+            raise Exception("No sheet name provided for the excel_file")
 
     ## other variables
-    sheets = block.variables.get("sheet_name", None)
     seed = block.variables.get("seed", 63462634)
     num_Iter = block.variables.get("num_iter", 30)
     split_strategy = block.variables.get("split_strategy", "stratifiedkfold")
@@ -350,14 +353,12 @@ def runSaveModelBioml(block: SlurmBlock):
     if file:
         os.system(f"cp {input_label} {folderName}")
     os.system(f"cp {training_features} {folderName}")
-    if cluster:
-        if not os.path.exists(cluster):
+    if cluster and  not os.path.exists(cluster):
             raise Exception(f"The cluster file does not exist: {cluster}")
-        os.system(f"cp {cluster} {folderName}")
-    if outliers:
-        if not os.path.exists(outliers):
+    os.system(f"cp {cluster} {folderName}")
+    if outliers and not os.path.exists(outliers):
             raise Exception(f"The outliers file does not exist: {outliers}")
-        os.system(f"cp {outliers} {folderName}")
+    os.system(f"cp {outliers} {folderName}")
     
     ## Command
     command = "python -m BioML.models.save_models "
@@ -425,8 +426,15 @@ def finalAction(block: SlurmBlock):
     downloaded_path = downloadResultsAction(block)
 
     folder_name = block.variables.get("model_output", "")
-
-    block.setOutput(outputModel.id, Path(downloaded_path)/folder_name)
+    model = list((Path(downloaded_path)/folder_name).glob(".pkl"))
+    if len(model) == 1:
+        model = model[0]
+        block.setOutput(outputModel.id, f"{model.parent}/{model.stem}")
+    else:
+        print("There are more than one model, please check the output folder")
+        print(f"Setting the output to the first model: {model[0]}")
+        model = model[0]
+        block.setOutput(outputModel.id, f"{model.parent}/{model.stem}")
 
 
 from utils import BSC_JOB_VARIABLES
