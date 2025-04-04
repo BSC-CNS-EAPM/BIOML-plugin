@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import typing
+from pathlib import Path
 
 def pssm_generation(
     input_file,
@@ -749,6 +750,47 @@ def downloadResultsAction(block: SlurmBlock):
 
     return final_path
 
+def load_config(file_path: str | Path, extension: str="json") -> dict:
+    """
+    Load a configuration file and return its contents as a dictionary.
+
+    Parameters
+    ----------
+    file_path : str or Path
+        The path to the configuration file.
+    extension : str, optional
+        The file extension. Defaults to "json".
+
+    Returns
+    -------
+    dict
+        The contents of the configuration file as a dictionary.
+
+    Raises
+    ------
+    ValueError
+        If the file extension is not supported.
+
+    Examples
+    --------
+    >>> load_config("path/to/config.json")
+    {'key1': 'value1', 'key2': 'value2'}
+    """
+    import json
+    import yaml
+    file_path = Path(file_path)
+    if file_path.exists():
+        with open(file_path) as file:
+            if extension == "json":
+                return json.load(file)
+            elif extension == "yaml":
+                return yaml.load(file, Loader=yaml.FullLoader)
+            else:
+                raise ValueError(f"Unsupported file extension: {extension}")
+    else:
+        print("no concent found returning empty {}")
+        return {}
+    
 
 # Other variables
 simulationNameVariable = PluginVariable(

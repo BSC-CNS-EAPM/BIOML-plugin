@@ -10,6 +10,7 @@ from HorusAPI import (
     VariableGroup,
     VariableList,
     VariableTypes,
+    Extensions
 )
 
 # ==========================#
@@ -36,10 +37,10 @@ inputLabelFile = PluginVariable(
 # Variable outputs
 # ==========================#
 
-outputCheckpoint = PluginVariable(
-    name="output checkpoint",
-    id="out_checkpoint",
-    description="The path to the output checkpointed models",
+outputPEFT = PluginVariable(
+    name="output peft adapter",
+    id="out_peft",
+    description="The path to the adapter_model models",
     type=VariableTypes.FOLDER,
 )
 
@@ -119,7 +120,7 @@ trainConfig = PluginVariable(
 def Finetune(block: SlurmBlock):
     
     from pathlib import Path
-    
+    from utils import load_config
     # inputs
     input_fasta = block.inputs.get("fasta_file", None)
     if input_fasta is None:
@@ -149,30 +150,25 @@ def Finetune(block: SlurmBlock):
     os.system(f"cp {input_fasta} {folderName}")
     os.system(f"cp {input_label} {folderName}")
     
-    if llm_config:
-        if not os.path.exists(llm_config):
+    if llm_config and not os.path.exists(llm_config):
             raise Exception(f"The LLM config file does not exist: {llm_config}")
-        os.system(f"cp {llm_config} {folderName}")
+    os.system(f"cp {llm_config} {folderName}")
 
-    if tokenizer_config:
-        if not os.path.exists(tokenizer_config):
+    if tokenizer_config and not os.path.exists(tokenizer_config):
             raise Exception(f"The Tokenizer config file does not exist: {tokenizer_config}")
-        os.system(f"cp {tokenizer_config} {folderName}")
+    os.system(f"cp {tokenizer_config} {folderName}")
 
-    if split_config:
-        if not os.path.exists(split_config):
+    if split_config and  not os.path.exists(split_config):
             raise Exception(f"The Split config file does not exist: {split_config}")
-        os.system(f"cp {split_config} {folderName}")
+    os.system(f"cp {split_config} {folderName}")
 
-    if train_config:
-        if not os.path.exists(train_config):
+    if train_config and not os.path.exists(train_config):
             raise Exception(f"The Train config file does not exist: {train_config}")
-        os.system(f"cp {train_config} {folderName}")
+    os.system(f"cp {train_config} {folderName}")
 
-    if lightning_config:
-        if not os.path.exists(lightning_config):
+    if lightning_config and not os.path.exists(lightning_config):
             raise Exception(f"The Lightning config file does not exist: {lightning_config}")
-        os.system(f"cp {lightning_config} {folderName}")
+    os.system(f"cp {lightning_config} {folderName}")
     
     ## Commands
     command = f"python -m BioML.deep.finetuning "
@@ -199,6 +195,7 @@ def Finetune(block: SlurmBlock):
     ## change bsc variables
     block.variables["script_name"] = "finetuning.sh"
     block.variables["partition"] = "acc_bscls"
+    block.extraData["train_config"] = train_config
 
     from utils import launchCalculationAction
     
@@ -212,9 +209,28 @@ def Finetune(block: SlurmBlock):
 
 def finalAction(block: SlurmBlock):
     from pathlib import Path
+    from utils import load_config
     from utils import downloadResultsAction
+    
+    downloaded_path = downloadResultsAction(block)
+    train_config = block.extraData.get("train_config", None)
+    e = Extensions()
 
-    downloadResultsAction(block)
+    if train_config is None:
+        peft_path = "peft_model"
+        csv_file = Path(f"{downloaded_path}/Loggers").glob("*/*/*.csv")
+    else:
+        train_config = load_config(train_config)
+        peft_path = Path(train_config["root_dir"]) / train_config["adapter_output"]
+        csv_file = Path(f"{downloaded_path}/{train_config['root_dir']}/Loggers").glob("*/*/metrics.csv")
+
+    for file in csv_file:
+         e.loadCSV(str(file), f"{file.parent.name}_metrics")
+         
+    block.setOutput(
+        outputPEFT.id,
+        os.path.join(downloaded_path, peft_path),
+    )
 
 
 from utils import BSC_JOB_VARIABLES
