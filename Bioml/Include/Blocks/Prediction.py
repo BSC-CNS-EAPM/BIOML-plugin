@@ -21,7 +21,7 @@ fastaFile = PluginVariable(
     description="The fasta file path.",
     type=VariableTypes.FILE,
     defaultValue=None,
-    allowedValues=["fasta"],
+    allowedValues=["fasta", "fsa"],
 )
 modelPath = PluginVariable(
     name="Model Path",
@@ -69,7 +69,7 @@ outputPrediction = PluginVariable(
     name="Prediction output",
     id="out_zip",
     description="The zip file to the output for the prediction results",
-    type=VariableTypes.FOLDER,
+    type=VariableTypes.FILE,
 )
 
 ##############################
@@ -80,7 +80,7 @@ predictionOutput = PluginVariable(
     id="prediction_dir",
     description="The path where to save the prediction results.",
     type=VariableTypes.STRING,
-    defaultValue="prediction_results",
+    defaultValue="prediction_results/predictions.csv",
 )
 
 numThreads = PluginVariable(
@@ -149,6 +149,30 @@ applicabilityDomain = PluginVariable(
     defaultValue=True,
 )
 
+deepModel = PluginVariable(
+    name="Deep model",
+    id="deep_model",
+    description="If to use deep model",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=False,
+)
+
+llmConfig = PluginVariable(
+    name="LLM config",
+    id="llm_config",
+    description="The config file to use for LLM model in json or yaml format",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+    allowedValues=["json", "yaml"],
+)
+
+peftModel = PluginVariable(
+    name="Peft model",
+    id="peft_model",
+    description="Path to the peft model to use for the prediction",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+)
 
 def runPredictionBioml(block: SlurmBlock):
     from pathlib import Path
@@ -178,6 +202,10 @@ def runPredictionBioml(block: SlurmBlock):
     if os.path.exists(input_label):
         file = True
     
+    deep_model = block.variables.get("deep_model", False)
+    llm_config = block.variables.get("llm_config", None)
+    pef_model = block.variables.get("peft_model", None)
+
     test_features = block.inputs.get("test_features", None)
     if test_features is None:
         raise Exception("No test features provided")
@@ -227,13 +255,23 @@ def runPredictionBioml(block: SlurmBlock):
     if file:
         os.system(f"cp {input_label} {folderName}")
 
+    if llm_config:
+        os.system(f"cp {llm_config} {folderName}")
+    if pef_model:
+        os.system(f"cp -r {pef_model} {folderName}")
     # Run the command
     command = "python -m BioML.models.predict "
     if input_fasta:
         command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
-    command += f"--model_path {folderName}/{Path(model_path).name} "
-    command += f"--training_features {folderName}/{Path(training_features).name} "
-    command += f"--test_features {folderName}/{Path(test_features).name} "
+    if not deep_model:
+        command += f"--model_path {folderName}/{Path(model_path).name} "
+        command += f"--training_features {folderName}/{Path(training_features).name} "
+        command += f"--test_features {folderName}/{Path(test_features).name} "
+    else:
+        command += f"-d "
+        command += f"--peft {folderName}/{Path(pef_model).name} "
+        if llm_config:
+            command += f"-lc {llm_config} "
     command += f"--problem {problem} "
     command += f"--scaler {scaler} "
     command += f"-nss {num_similar_samples} "
@@ -277,7 +315,7 @@ def finalAction(block: SlurmBlock):
     from pathlib import Path
 
     downloaded_path = downloadResultsAction(block)
-    prediction_output = block.extraData.get("prediction_dir", "prediction_results")
+    prediction_output = block.extraData.get("prediction_dir", "prediction_result/predictions.csv")
 
     block.setOutput(outputPrediction.id, Path(downloaded_path)/prediction_output)
 
@@ -290,7 +328,7 @@ PredictBlock = SlurmBlock(
     initialAction=runPredictionBioml,
     finalAction=finalAction,
     description="Predict using the models and average the votations.",
-    inputs=[modelPath, testFeatures, trainingFeatures, Problem],
+    inputs=[Problem],
     variables=BSC_JOB_VARIABLES + [
         scalerVar,
         sheetName,
@@ -300,7 +338,12 @@ PredictBlock = SlurmBlock(
         outliersTrain,
         outliersTest,
         predictionOutput,
-        fastaFile, 
+        fastaFile, modelPath, testFeatures, trainingFeatures,
+        testSheetName,
+        deepModel,
+        llmConfig,
+        peftModel,
+        numThreads,
     ],
     outputs=[outputPrediction],
 )
