@@ -502,18 +502,22 @@ def finalAction(block: SlurmBlock):
     e = Extensions()
     block.setOutput(outputClassification.id, FolderName)
     if iterate_features:
-        if os.path.exists(FolderName / "training_features.xlsx"):
-            excel_sheets = pd.ExcelFile(FolderName / "training_features.xlsx").sheet_names
+        # visualize the results of the top 3 feature sets (each feature set is a sheet in the excel file 
+        # and will show the results of the top 3 models trained for that feature set)
+        if os.path.exists(FolderName / "training_results.xlsx"):
+            excel_sheets = pd.ExcelFile(FolderName / "training_results.xlsx").sheet_names
             training_features = pd.read_excel(
-                FolderName / "training_features.xlsx", sheet_name=excel_sheets[:3], index_col=[0,1,2]
+                FolderName / "training_results.xlsx", sheet_name=excel_sheets[:3], index_col=[0,1,2]
             )
             for num, (sheet, df) in enumerate(training_features.items()):
-                df.to_csv(FolderName / f"training_features_{sheet}.csv")
+                df.to_csv(FolderName / f"training_results_{sheet}.csv")
                 e.loadCSV(
-                    FolderName / f"training_features_{sheet}.csv",
-                    f"features_top{num}_{sheet}",
+                    FolderName / f"training_results_{sheet}.csv",
+                    f"top{num}_results_{sheet}",
                 )
     else:
+        # After visualizing the top feature set and selecting that feature set for futher comparisons and tuning
+        # visualize the results of the top 3 models trained for that feature set and plot theiur performance
         if os.path.exists(FolderName / "model_plots"):
             model_plots = Path(FolderName / "model_plots").glob("*/*/*.png")
             for plot in model_plots:

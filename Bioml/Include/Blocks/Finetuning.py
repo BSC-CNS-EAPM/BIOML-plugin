@@ -225,6 +225,7 @@ def finalAction(block: SlurmBlock):
         csv_file = Path(f"{downloaded_path}/{train_config['root_dir']}/Loggers").glob("*/*/metrics.csv")
 
     for file in csv_file:
+         # visualize the performance metrics per epoch of the trained models
          e.loadCSV(str(file), f"{file.parent.name}_metrics")
          
     block.setOutput(

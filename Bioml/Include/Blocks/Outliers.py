@@ -10,6 +10,7 @@ from HorusAPI import (
     VariableGroup,
     VariableList,
     VariableTypes,
+    Extensions
 )
 
 # ==========================#
@@ -98,6 +99,7 @@ def runOutliersBioml(block: SlurmBlock):
         block.variables["cpus"] = num_threads
 
     block.variables["script_name"] = "outliers.sh"
+    block.extraData["outliers"] = output_csv
     
     command = "python -m BioML.utilities.outlier "
     command += f"-i {input_excel} "
@@ -123,9 +125,16 @@ def runOutliersBioml(block: SlurmBlock):
 
 def finalAction(block: SlurmBlock):
     from utils import downloadResultsAction
+    from pathlib import Path
+    e = Extensions()
+
     downloaded_path = downloadResultsAction(block)
-    
-    block.setOutput(outputOutliers.id, downloaded_path)
+    output_csv = block.extraData.get("outliers", "training_results/outliers.csv")
+
+    block.setOutput(outputOutliers.id, Path(downloaded_path) / output_csv)
+
+    # visualize the outliers
+    e.loadCSV(str(Path(downloaded_path) / output_csv), "outliers")
 
 
 from utils import BSC_JOB_VARIABLES
