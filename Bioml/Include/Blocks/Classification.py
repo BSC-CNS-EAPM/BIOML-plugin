@@ -352,7 +352,7 @@ def runClassificationBioml(block: SlurmBlock):
     optimize = block.variables.get("optimize", "MCC")
     tune = block.variables.get("tune", True)
     
-    if block.selectedInputGroup == "input_label_string":
+    if block.selectedInputGroup == "stringType_input":
         input_label = block.inputs.get("input_label_string", None)
         file=False
     else:

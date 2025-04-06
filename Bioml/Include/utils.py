@@ -8,30 +8,6 @@ import subprocess
 import typing
 from pathlib import Path
 
-def pssm_generation(
-    input_file,
-    output_database="../data/whole_sequence",
-    database_input="/home/lavane/sdb/Databases/uniref50.fasta",
-    generate_searchdb=True,
-    database_output=None,
-    pssm_filename="pssm.pssm",
-    outputdir="pssm_test",
-) -> str:
-    from BioML.utilities.utils import MmseqsClustering
-
-    pssm_file = MmseqsClustering.easy_generate_pssm(
-        input_file=input_file,
-        database_input=database_input,
-        output_database=output_database,
-        generate_searchdb=generate_searchdb,
-        database_output=database_output,
-        pssm_filename=pssm_filename,
-        output_dir=outputdir,
-    )
-
-    return pssm_file
-
-
 # TODO adaptar a los dos tipos de extraction
 def extract_features(
     minimal_sequence_length=100,
@@ -750,7 +726,7 @@ def downloadResultsAction(block: SlurmBlock):
 
     return final_path
 
-def load_config(file_path: str | Path, extension: str="json") -> dict:
+def load_config(file_path: str, extension: str="json") -> dict:
     """
     Load a configuration file and return its contents as a dictionary.
 

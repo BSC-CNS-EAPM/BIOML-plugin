@@ -288,8 +288,7 @@ def runRegressionBioml(block: SlurmBlock):
             "The iterate features option is only available for excel files."
         )
     
-    
-    if block.selectedInputGroup == "input_label_string":
+    if block.selectedInputGroup == "stringType_input":
         input_label = block.inputs.get("input_label_string", None)
         file = False
     else:

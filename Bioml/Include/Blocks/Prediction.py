@@ -13,7 +13,7 @@ from HorusAPI import (
 )
 
 # ==========================#
-# Variable inputs
+# Classifcal Variable inputs
 # ==========================#
 fastaFile = PluginVariable(
     name="Fasta file",
@@ -62,6 +62,56 @@ inputLables = PluginVariable(
     type=VariableTypes.STRING,
 )
 
+### ==========================#
+#   Finetuning Variables
+### ==========================#
+
+
+peftModel = PluginVariable(
+    name="Peft model",
+    id="peft_model",
+    description="Path to the peft model to use for the prediction",
+    type=VariableTypes.FOLDER,
+    defaultValue=None,
+)
+
+LLMConfig = PluginVariable(
+    name="LLM Config",
+    id="llm_config",
+    description="The config file to use for LLM model in json or yaml format",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+    allowedValues=["json", "yaml"],
+)
+
+TokenizerConfig = PluginVariable(
+    name="Tokenizer Config",
+    id="tokenizer_config",
+    description="The config file to use for Tokenizer in json or yaml format",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+    allowedValues=["json", "yaml"],
+)
+
+
+### ==========================#
+# Variable groups
+### ==========================#
+
+FineTuneGroup = VariableGroup(
+    id="fine_tune_group",
+    name="Fine Tuning",
+    description="Using the fine tuned model for prediction",
+    variables=[Problem, peftModel]
+)
+
+ClassicalGroup = VariableGroup(
+    id="classical_group",
+    name="Classical ML",
+    description="Using the classical ML model for prediction",
+    variables=[Problem, modelPath, testFeatures],
+)
+
 # ==========================#
 # Variable outputs
 # ==========================#
@@ -75,6 +125,8 @@ outputPrediction = PluginVariable(
 ##############################
 #       Other variables      #
 ##############################
+
+
 predictionOutput = PluginVariable(
     name="Prediction Output",
     id="prediction_dir",
@@ -146,143 +198,125 @@ applicabilityDomain = PluginVariable(
     id="applicability_domain",
     description="If to use applicability domain filtering",
     type=VariableTypes.BOOLEAN,
-    defaultValue=True,
-)
-
-deepModel = PluginVariable(
-    name="Deep model",
-    id="deep_model",
-    description="If to use deep model",
-    type=VariableTypes.BOOLEAN,
     defaultValue=False,
 )
 
-llmConfig = PluginVariable(
-    name="LLM config",
-    id="llm_config",
-    description="The config file to use for LLM model in json or yaml format",
-    type=VariableTypes.FILE,
-    defaultValue=None,
-    allowedValues=["json", "yaml"],
-)
-
-peftModel = PluginVariable(
-    name="Peft model",
-    id="peft_model",
-    description="Path to the peft model to use for the prediction",
-    type=VariableTypes.FILE,
-    defaultValue=None,
-)
 
 def runPredictionBioml(block: SlurmBlock):
     from pathlib import Path
+
+    ## Other variables for classical
+    scaler = block.variables.get("scaler", "zscore")
+    sheets = block.variables.get("sheet_name", None)
+    test_sheets = block.variables.get("test_sheet_name", None)
+    num_similar_samples = block.variables.get("num_similar_samples", 1)
+    applicability_domain = block.variables.get("applicability_domain", False)
+    outliers_train = block.variables.get("outliers_train", None)
+    outliers_test = block.variables.get("outliers_test", None)
+    input_label = block.variables.get("in_label", None)
+    training_features = block.variables.get("training_features", None)
+    ## Other variables for fine tuning
+    llm_config = block.variables.get("llm_config", None)
+    tokenizer_args = block.variables.get("tokenizer_config", None)
+
+    ## Shared variables
+    prediction_output = block.variables.get("prediction_dir", "prediction_results/predictions.csv")
+    num_threads = block.variables.get("num_threads", 20)
+    input_fasta = block.variables.get("fasta_file", None)
+    folderName = "prediction_inputs"
 
     #inputs
     problem = block.inputs.get("problem", None)
     if problem is None:
         raise Exception("No problem provided")
-    input_fasta = block.inputs.get("fasta_file", None)
-    if input_fasta is None and problem == "classification":
-        raise Exception("No fasta file provided, it is required for classification")
-    if input_fasta and not os.path.exists(input_fasta):
-        raise Exception(f"The input fasta file does not exist: {input_fasta}")
-    
-    training_features = block.inputs.get("training_features", None)
-    if training_features is None:
-        raise Exception("No training features provided")
-    if not os.path.exists(training_features):
-        raise Exception(
-            f"The training features file does not exist: {training_features}"
-        )
 
-    input_label = block.variables.get("in_label", None)
-    if input_label is None:
-        raise Exception("No input label provided")
-    file = False
-    if os.path.exists(input_label):
-        file = True
-    
-    deep_model = block.variables.get("deep_model", False)
-    llm_config = block.variables.get("llm_config", None)
-    pef_model = block.variables.get("peft_model", None)
+    if block.selectedInputGroup == "fine_tune_group":
+        pef_model = block.inputs.get("peft_model", None)
+        if input_fasta is None:
+            raise Exception("No input fasta provided, required for the fine tuned model predictions")
+        if pef_model:
+            os.system(f"cp -r {pef_model} {folderName}")
 
-    test_features = block.inputs.get("test_features", None)
-    if test_features is None:
-        raise Exception("No test features provided")
-    if not os.path.exists(test_features):
-        raise Exception(f"The test features file does not exist: {test_features}")        
+    elif block.selectedInputGroup == "classical_group":
+        test_features = block.inputs.get("test_features", None)
+        if test_features is None:
+            raise Exception("No test features provided")
+        if not os.path.exists(test_features):
+            raise Exception(f"The test features file does not exist: {test_features}")        
 
-    model_path = block.inputs.get("model_path", None)
-    if model_path is None:
-        raise Exception("No model path provided")
-    if not os.path.exists(model_path):
-        raise Exception(f"The model path does not exist: {model_path}")
-    
-    ## Other variables
-    scaler = block.variables.get("scaler", "zscore")
-    sheets = block.variables.get("sheet_name", None)
-    test_sheets = block.variables.get("test_sheet_name", None)
-    num_similar_samples = block.variables.get("num_similar_samples", 1)
-    applicability_domain = block.variables.get("applicability_domain", True)
-    outliers_train = block.variables.get("outliers_train", None)
-    outliers_test = block.variables.get("outliers_test", None)
-    prediction_output = block.variables.get("prediction_dir", "prediction_results")
-    num_threads = block.variables.get("num_threads", 20)
-    folderName = "prediction_inputs"
+        model_path = block.inputs.get("model_path", None)
+        if model_path is None:
+            raise Exception("No model path provided")
+        if not os.path.exists(model_path):
+            raise Exception(f"The model path does not exist: {model_path}")
 
-    if test_features.endswith(".xlsx") and not test_sheets:
-        raise Exception(
-            "The test features is in excel format, please provide the sheet name"
-        )
-    if training_features.endswith(".xlsx") and not sheets:
-        raise Exception(
-            "The training features is in excel format, please provide the sheet name"
-        )
+        if input_fasta is None and problem == "classification" and applicability_domain:
+            raise Exception("No fasta file provided, it is required for classification in classical ML")
+        if input_fasta and not os.path.exists(input_fasta):
+            raise Exception(f"The input fasta file does not exist: {input_fasta}")
+        
+        if test_features.endswith(".xlsx") and not test_sheets:
+            raise Exception(
+                "The test features is in excel format, please provide the sheet name"
+            )
+        
+        os.system(f"cp {test_features} {folderName}")
+        os.system(f"cp -r {model_path} {folderName}")
+
+    if training_features:
+        if not os.path.exists(training_features):
+            raise Exception(
+                f"The training features file does not exist: {training_features}"
+            )
+        if training_features.endswith(".xlsx") and not sheets:
+            raise Exception(
+                "The training features is in excel format, please provide the sheet name"
+            )
 
     # Create an copy the inputs
     os.makedirs(folderName, exist_ok=True)
     if input_fasta:
         os.system(f"cp {input_fasta} {folderName}")
     os.system(f"cp {training_features} {folderName}")
-    os.system(f"cp {test_features} {folderName}")
-    os.system(f"cp -r {model_path} {folderName}")
+
     if outliers_train and not os.path.exists(outliers_train):
             raise Exception(f"The outliers train file does not exist: {outliers_train}")
     os.system(f"cp {outliers_train} {folderName}")
     if outliers_test and not os.path.exists(outliers_test):
             raise Exception(f"The outliers test file does not exist: {outliers_test}")
     os.system(f"cp {outliers_test} {folderName}")
-    if file:
-        os.system(f"cp {input_label} {folderName}")
+
 
     if llm_config:
         os.system(f"cp {llm_config} {folderName}")
-    if pef_model:
-        os.system(f"cp -r {pef_model} {folderName}")
+    if tokenizer_args:
+        os.system(f"cp {tokenizer_args} {folderName}")
     # Run the command
     command = "python -m BioML.models.predict "
     if input_fasta:
         command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
-    if not deep_model:
+
+    if block.selectedInputGroup == "classical_group":
         command += f"--model_path {folderName}/{Path(model_path).name} "
-        command += f"--training_features {folderName}/{Path(training_features).name} "
         command += f"--test_features {folderName}/{Path(test_features).name} "
-    else:
+    elif block.selectedInputGroup == "fine_tune_group":
         command += f"-d "
         command += f"--peft {folderName}/{Path(pef_model).name} "
         if llm_config:
             command += f"-lc {llm_config} "
+        if tokenizer_args:
+            command += f"-tc {tokenizer_args} "
+    if training_features:
+        command += f"--training_features {folderName}/{Path(training_features).name} "
     command += f"--problem {problem} "
     command += f"--scaler {scaler} "
     command += f"-nss {num_similar_samples} "
-    if not applicability_domain:
+    if  applicability_domain:
         command += f"-ad {applicability_domain} "
     if sheets:
         command += f"--sheets {sheets} "
-    if not file:
+    if input_label:
         command += f"--label {input_label} "
-    else:
-        command += f"--label {folderName}/{Path(input_label).name} "
     if outliers_test:
         command += f"--outliers_test {folderName}/{Path(outliers_test).name} "
     if outliers_train:
@@ -328,7 +362,10 @@ PredictBlock = SlurmBlock(
     initialAction=runPredictionBioml,
     finalAction=finalAction,
     description="Predict using the models and average the votations.",
-    inputs=[Problem],
+    inputGroups=[
+        FineTuneGroup,
+        ClassicalGroup,
+    ],
     variables=BSC_JOB_VARIABLES + [
         scalerVar,
         sheetName,
@@ -338,12 +375,14 @@ PredictBlock = SlurmBlock(
         outliersTrain,
         outliersTest,
         predictionOutput,
-        fastaFile, modelPath, testFeatures, trainingFeatures,
+        fastaFile, # puede ser un input y un variable qué haces entonces? 
         testSheetName,
-        deepModel,
-        llmConfig,
-        peftModel,
         numThreads,
+        LLMConfig, TokenizerConfig, 
+        trainingFeatures,
+        inputLables
+
+
     ],
     outputs=[outputPrediction],
 )
