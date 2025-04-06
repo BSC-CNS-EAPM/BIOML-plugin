@@ -213,7 +213,7 @@ def runPredictionBioml(block: SlurmBlock):
     applicability_domain = block.variables.get("applicability_domain", False)
     outliers_train = block.variables.get("outliers_train", None)
     outliers_test = block.variables.get("outliers_test", None)
-    input_label = block.variables.get("in_label", None)
+    input_label = block.variables.get("in_labels", None)
     training_features = block.variables.get("training_features", None)
     ## Other variables for fine tuning
     llm_config = block.variables.get("llm_config", None)
@@ -306,8 +306,10 @@ def runPredictionBioml(block: SlurmBlock):
             command += f"-lc {llm_config} "
         if tokenizer_args:
             command += f"-tc {tokenizer_args} "
+
     if training_features:
         command += f"--training_features {folderName}/{Path(training_features).name} "
+
     command += f"--problem {problem} "
     command += f"--scaler {scaler} "
     command += f"-nss {num_similar_samples} "
@@ -375,13 +377,11 @@ PredictBlock = SlurmBlock(
         outliersTrain,
         outliersTest,
         predictionOutput,
-        fastaFile, # puede ser un input y un variable qué haces entonces? 
+        fastaFile, 
         testSheetName,
         numThreads,
         LLMConfig, TokenizerConfig, 
         trainingFeatures,
-        inputLables
-
 
     ],
     outputs=[outputPrediction],

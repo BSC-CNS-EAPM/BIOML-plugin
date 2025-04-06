@@ -28,7 +28,7 @@ fastaFile = PluginVariable(
 inputLabelFile = PluginVariable(
     name="Input Label File",
     id="input_label_file",
-    description="The path to the labels of the training set in a format camptible with np.load",
+    description="The path to the labels of the training set in a csv file, a file compatible with np.load",
     type=VariableTypes.FILE,
     defaultValue=None,
 )
@@ -252,6 +252,6 @@ FinetuningBlock = SlurmBlock(
         splitConfig,
         trainConfig,
     ],
-    outputs=[],
+    outputs=[outputPEFT],
 )
 
