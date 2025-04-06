@@ -10,6 +10,7 @@ from HorusAPI import (
     VariableGroup,
     VariableList,
     VariableTypes,
+    Extensions
 )
 
 # ==========================#
@@ -349,12 +350,16 @@ def runPredictionBioml(block: SlurmBlock):
 def finalAction(block: SlurmBlock):
     from utils import downloadResultsAction
     from pathlib import Path
+    e = Extensions()
 
     downloaded_path = downloadResultsAction(block)
     prediction_output = block.extraData.get("prediction_dir", "prediction_result/predictions.csv")
 
     block.setOutput(outputPrediction.id, Path(downloaded_path)/prediction_output)
-
+    e.loadCSV(
+        str(Path(downloaded_path)/prediction_output),
+        "predictions",
+    )
 
 from utils import BSC_JOB_VARIABLES
 
