@@ -1,5 +1,5 @@
 """
-A module that performs regression analysis on a dataset.
+A module that performs predictions on a dataset.
 """
 
 import os

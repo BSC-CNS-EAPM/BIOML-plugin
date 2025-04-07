@@ -54,6 +54,10 @@ def createPlugin():
 
     biomlPlugin.addBlock(EmbeddingBlock)
 
+    from Blocks.app_suggest import SuggestionBlock # type: ignore
+
+    biomlPlugin.addBlock(SuggestionBlock)
+
     from config import BIOML_CONFIG
     
     biomlPlugin.addConfig(BIOML_CONFIG)

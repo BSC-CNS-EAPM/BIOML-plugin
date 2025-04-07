@@ -53,7 +53,7 @@ modelName = PluginVariable(
     id="model_name",
     description="The name of the LLM model compatible with huggingface",
     type=VariableTypes.STRING,
-    defaultValue="facebook/esm2_t6_8M_UR50D",
+    defaultValue="facebook/esm2_t33_650M_UR50D",
 )
 
 Mode = PluginVariable(
@@ -138,7 +138,7 @@ def GenerateEmbeddings(block: SlurmBlock):
     input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
     
     output_file = block.variables.get("output_csv", "embeddings.csv")
-    model_name = block.variables.get("model_name", "facebook/esm2_t6_8M_UR50D")
+    model_name = block.variables.get("model_name", "facebook/esm2_t33_650M_UR50D")
     mode = block.variables.get("mode", "append")
     batch_size = block.variables.get("batch_size", 8)
     seed = block.variables.get("seed", 12891245318)
