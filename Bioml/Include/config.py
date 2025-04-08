@@ -17,7 +17,7 @@ possumProgram = PluginVariable(
 
 databaseInput = PluginVariable(
     name="database input",
-    id="dbin",
+    id="database_input",
     description="""The path to database fasta file, it should already be in remote, so use the remote path, 
     even if it is a fasta file you want to create the database from""",
     type=VariableTypes.STRING,

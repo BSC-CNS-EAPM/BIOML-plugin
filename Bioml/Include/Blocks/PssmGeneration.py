@@ -174,7 +174,7 @@ generatePSSMBlock = SlurmBlock(
     id="generate_pssm",
     initialAction=runGeneratePSSMBioml,
     finalAction=finalAction,
-    description="Outlier detection.",
+    description="Generate PSSM files.",
     inputs=[fastaFile],
     variables=BSC_JOB_VARIABLES
     + [numThreads,

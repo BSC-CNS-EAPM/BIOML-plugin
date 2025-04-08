@@ -7,11 +7,7 @@
   "pluginFile": "Bioml.py",
   "externalURL": "https://github.com/BSC-CNS-EAPM/BIOML-plugin.git",
   "dependencies": [
-  "pandas",
-  "scikit-learn",
-  "biopython",
   "shap",
-  "matplotlib",
   "pycaret[analysis,models]",
   "openpyxl",
   "pyod",
@@ -24,6 +20,7 @@
   "peft",
   "datasets",
   "torch",
-  "git+https://github.com/etiur/BioML.git"     
+  "git+https://github.com/etiur/BioML.git",
+  "git+https://github.com/Martin-Floor/bsc_calculations.git"
   ]
 }

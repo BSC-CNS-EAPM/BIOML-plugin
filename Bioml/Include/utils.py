@@ -350,7 +350,7 @@ def setup_bsc_calculations_based_on_horus_remote(
         cluster = remote_host
 
     if remote_host in localIPs.values():
-        cluster = "powerpuff"
+        cluster = "phastos"
 
     # If we are working with pele, only marenostrum and nord3 are allowed
     if program == "pele":
@@ -363,14 +363,6 @@ def setup_bsc_calculations_based_on_horus_remote(
         ]:
             raise Exception("Pele can only be run on Marenostrum or Nord3")
 
-        if cluster == "nord3.bsc.es":
-            bsc_calculations.nord3.setUpPELEForNord3(
-                jobs,
-                partition=partition,
-                cpus=cpus,
-                general_script=scriptName,
-                scripts_folder=scriptName + "_scripts",
-            )
         elif "glogin" in cluster:
             bsc_calculations.mn5.setUpPELEForMarenostrum(
                 jobs,
@@ -397,7 +389,7 @@ def setup_bsc_calculations_based_on_horus_remote(
     # marenostrum
     elif "glogin" in cluster or "alogin" in cluster:
         print("Generating Marenostrum jobs...")
-        bsc_calculations.mn5.jobArrays(
+        bsc_calculations.mn5.singleJob(
             jobs,
             job_name=job_name,
             partition=partition,
@@ -405,32 +397,8 @@ def setup_bsc_calculations_based_on_horus_remote(
             script_name=scriptName,
             ntasks=cpus,
             cpus_per_task=cpus_per_task,
-            module_purge=modulePurge,
         )
-    # minotauro
-    elif cluster == "mt1.bsc.es":
-        print("Generating minotauro jobs...")
-        bsc_calculations.minotauro.jobArrays(
-            jobs,
-            job_name=job_name,
-            partition=partition,
-            program=program,
-            script_name=scriptName,
-            gpus=cpus,
-            module_purge=modulePurge,
-        )
-    # nord3
-    elif "nord" in cluster:
-        print("Generating nord3 jobs...")
-        bsc_calculations.nord3.jobArrays(
-            jobs,
-            job_name=job_name,
-            partition=partition,
-            program=program,
-            script_name=scriptName,
-            cpus=cpus,
-            module_purge=modulePurge,
-        )
+
     # cte-amd
     elif "amdlogin" in cluster:
         print("Generating cte-amd jobs...")
@@ -444,7 +412,7 @@ def setup_bsc_calculations_based_on_horus_remote(
             # module_purge=modulePurge,
         )
     # powerpuff
-    elif cluster == "powerpuff":
+    elif cluster in ["powerpuff", "phastos"]:
         print("Generating powerpuff girls jobs...")
         bsc_calculations.local.parallel(
             jobs,
@@ -539,7 +507,7 @@ def launchCalculationAction(
     # Rewrite the main script to add the environment variables
     # and allow for waiting for the jobs to finish
     # This is only necessary for powerpuff and local
-    if cluster == "powerpuff" or cluster == "local":
+    if cluster in ["phastos", "powerpuff", "local"]:
         with open(scriptName, "w") as f:
             f.write("#!/bin/sh\n")
 
@@ -592,7 +560,7 @@ def launchCalculationAction(
         print("Running the simulation...")
 
         # Run the simulation
-        if cluster == "powerpuff":
+        if cluster in ["powerpuff", "phastos"]:
             # The powerpuff cluster doesn't have Slurm, so we need to run the script manually & load the Schrodinger module
             schrodingerPath = block.remote.remoteCommand("echo $SCHRODINGER")
             command = f"export={schrodingerPath} cd {simRemoteDir} && bash {scriptName}"
@@ -611,6 +579,7 @@ def launchCalculationAction(
                             print("Submitted job with ID: ", jobID)
                 print("Waiting for the jobs to finish...")
             else:
+
                 jobID = block.remote.submitJob(scriptPath)
                 print(f"Simulation running with job ID {jobID}. Waiting for it to finish...")
 
