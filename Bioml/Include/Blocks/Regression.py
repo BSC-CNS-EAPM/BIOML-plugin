@@ -392,7 +392,7 @@ def runRegressionBioml(block: SlurmBlock):
     if log_experiments:
         command += f"-log "
 
-    jobs = [command]
+    jobs = command
 
     
     block.variables["script_name"] = "regression.sh"

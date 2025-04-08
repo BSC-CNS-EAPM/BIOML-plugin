@@ -329,7 +329,7 @@ def runPredictionBioml(block: SlurmBlock):
 
     command += f"--res_dir {prediction_output} "
 
-    jobs = [command]
+    jobs = command
 
 
     block.extraData["prediction_dir"] = prediction_output

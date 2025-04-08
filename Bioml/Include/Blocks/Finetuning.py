@@ -190,7 +190,7 @@ def Finetune(block: SlurmBlock):
         command += f"-tr {folderName}/{Path(train_config).name} "
 
 
-    jobs = [command]
+    jobs = command
     
     ## change bsc variables
     block.variables["script_name"] = "finetuning.sh"

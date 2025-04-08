@@ -176,7 +176,7 @@ def GenerateEmbeddings(block: SlurmBlock):
     if pretrained_config:
         command += f"-pt {pretrained_config} "
 
-    jobs = [command]
+    jobs = command
     
     ## change bsc variables
     block.variables["script_name"] = "generate_embeddings.sh"

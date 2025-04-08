@@ -199,7 +199,7 @@ def initialAction(block: SlurmBlock):
     if sheet_name:
         command += f"-sh {sheet_name} "
 
-    jobs = [command]
+    jobs = command
 
     block.variables["cpus"] = num_threads
     block.variables["script_name"] = "feature_selection.sh"

@@ -109,7 +109,7 @@ def runOutliersBioml(block: SlurmBlock):
     command += f"-o {output_csv} "
     command += f"-nfe {num_features} "
 
-    jobs = [command]
+    jobs = command
     
 
     from utils import launchCalculationAction

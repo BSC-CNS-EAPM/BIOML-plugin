@@ -130,14 +130,16 @@ def runGeneratePSSMBioml(block: SlurmBlock):
     command = f"python -m BioML.features.generate_pssm "
     command += f"-i {input_fasta} "
     command += f"-Po {possum_program_dir} "
-    command += f"-dbinp {database_input} "
+    command += f"--dbinp {database_input} "
     command += f"--iterations {num_iterations} "
     command += f"--evalue {e_value} "
     command += f"--sensitivity {sensitivity} "
-    command += f"--generate_searchdb {generate_search_db} "
+    if generate_search_db:
+        command += f"--generate_searchdb "
+
     command += f"-p {output_dir} "
 
-    jobs = [command]
+    jobs = command
     
     ## change bsc variables
     block.variables["cpus"] = (num_threads // 10) + 1

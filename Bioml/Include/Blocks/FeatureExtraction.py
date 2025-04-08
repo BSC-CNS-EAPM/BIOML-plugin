@@ -204,7 +204,7 @@ def initialAction(block: SlurmBlock):
     if drop_ifeature + drop_possum:
         command += f"--drop {' '.join(drop_ifeature + drop_possum)} "
 
-    jobs = [command]
+    jobs = command
 
     ## launching jobs
     from utils import launchCalculationAction

@@ -156,7 +156,7 @@ def GenerateSuggestions(block: SlurmBlock):
     if positions:
         command += f" --positions {' '.join(map(str, positions))}"
 
-    jobs = [command]
+    jobs = command
     
     ## change bsc variables
     block.variables["script_name"] = "suggest.sh"

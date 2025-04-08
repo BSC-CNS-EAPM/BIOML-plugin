@@ -398,7 +398,7 @@ def runSaveModelBioml(block: SlurmBlock):
     if sheets:
         command += f"-sh {sheets} "
 
-    jobs = [command]
+    jobs = command
 
     block.variables["script_name"] = "save_model.sh"
     block.variables["cpus"] = num_threads

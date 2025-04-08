@@ -327,7 +327,7 @@ def prediction(
     )
 
 
-localIPs = {"cactus": "84.88.51.217", "blossom": "84.88.51.250", "bubbles": "84.88.51.219"}
+localIPs = {"cactus": "84.88.51.217", "blossom": "84.88.51.250", "bubbles": "84.88.51.219", "phastos": "84.88.187.187"}
 
 
 def setup_bsc_calculations_based_on_horus_remote(
@@ -345,6 +345,8 @@ def setup_bsc_calculations_based_on_horus_remote(
     import bsc_calculations
 
     cluster = "local"
+    print("remote_name: ", remote_name)
+    print("remote_host: ", remote_host)
 
     if remote_name != "local":
         cluster = remote_host
@@ -415,7 +417,7 @@ def setup_bsc_calculations_based_on_horus_remote(
     elif cluster in ["powerpuff", "phastos"]:
         print("Generating powerpuff girls jobs...")
         bsc_calculations.local.parallel(
-            jobs,
+            [f"eval '$(conda shell.bash hook)'\n\nconda activate bioml\n\n{jobs}"],
             cpus=min(40, len(jobs)),
             script_name=scriptName,
         )
@@ -463,7 +465,7 @@ echo "All scripts completed successfully."
 
 def launchCalculationAction(
     block: SlurmBlock,
-    jobs: typing.List[str],
+    jobs: str,
     program: str,
     uploadFolders: typing.Optional[typing.List[str]] = None,
     modulePurge: typing.Optional[bool] = False,
@@ -562,8 +564,7 @@ def launchCalculationAction(
         # Run the simulation
         if cluster in ["powerpuff", "phastos"]:
             # The powerpuff cluster doesn't have Slurm, so we need to run the script manually & load the Schrodinger module
-            schrodingerPath = block.remote.remoteCommand("echo $SCHRODINGER")
-            command = f"export={schrodingerPath} cd {simRemoteDir} && bash {scriptName}"
+            command = f"cd {simRemoteDir} && bash {scriptName}"
 
             block.remote.remoteCommand(command)
 
