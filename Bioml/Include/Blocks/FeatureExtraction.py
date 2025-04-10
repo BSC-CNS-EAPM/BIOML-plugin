@@ -29,7 +29,7 @@ Purpose = PluginVariable(
 # Variable outputs for extraction
 # ================================#
 outputExtraction = PluginVariable(
-    name="Extracted directory",
+    name="Possum output",
     id="extracted_out",
     description="The directory for the extracted features",
     type=VariableTypes.STRING,
@@ -41,6 +41,7 @@ outputIfeature = PluginVariable(
     id="ifeature_out",
     description="The folder to save the ifeatures features",
     type=VariableTypes.STRING,
+    defaultValue="ifeature_features",
 )
 
 outputPossum = PluginVariable(
@@ -48,6 +49,7 @@ outputPossum = PluginVariable(
     id="possum_out",
     description="The folder to save the possum features",
     type=VariableTypes.STRING,
+    defaultValue="possum_features",
 )
 
 
@@ -137,11 +139,9 @@ OmegaType = PluginVariable(
     id="omega_type",
     description="The type of molecule to extract features from using Omega Features",
     type=VariableTypes.STRING_LIST,
-   allowedValues=["structure", "RNA", "DNA", "ligand"],
-   defaultValue=None
+   allowedValues=["structure", "RNA", "DNA", "ligand", "None"],
+   defaultValue="None"
 )
-
-
 
 def initialAction(block: SlurmBlock):
     from pathlib import Path
@@ -163,6 +163,8 @@ def initialAction(block: SlurmBlock):
     possum_program = block.config.get("possum_dir", "POSSUM_Toolkit/")
     ifeature_program = block.config.get("ifeature_dir", "iFeature")
     omega_type = block.variables.get("omega_type", None)
+    if omega_type == "None":
+        omega_type = None
     
 
     if input_fasta is None:
@@ -185,7 +187,7 @@ def initialAction(block: SlurmBlock):
     block.variables["cpus"] = num_threads
     block.variables["script_name"] = "feature_extraction.sh"
 
-    command = f"python -m BioML.features.extract "
+    command = f"python -m BioML.features.extraction "
     command += f"-i {input_fasta} "
     command += f"-r {' '.join(run)} "
 
@@ -197,6 +199,7 @@ def initialAction(block: SlurmBlock):
     command += f"-io {outputifeature} "
     command += f"-on {' '.join(purpose)} "
     command += f"-eo {extracted_features} "
+    command += f"-n {num_threads} "
     if long:
         command += f"--long "
     if omega_type is not None:

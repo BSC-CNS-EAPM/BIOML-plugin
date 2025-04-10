@@ -417,7 +417,7 @@ def setup_bsc_calculations_based_on_horus_remote(
     elif cluster in ["powerpuff", "phastos"]:
         print("Generating powerpuff girls jobs...")
         bsc_calculations.local.parallel(
-            [f"eval '$(conda shell.bash hook)'\n\nconda activate bioml\n\n{jobs}"],
+            [f"source activate bioml\n\n{jobs}"],
             cpus=min(40, len(jobs)),
             script_name=scriptName,
         )
@@ -437,7 +437,7 @@ def setup_bsc_calculations_based_on_horus_remote(
 
 HOOK_SCRIPT = """
 for script in calculation_script.sh_?; do
-    sh "$script" > "${script%.*}.out" 2> "${script%.*}.err" &
+    bash "$script" > "${script%.*}.out" 2> "${script%.*}.err" &
     exit_code=$?
 done
 
