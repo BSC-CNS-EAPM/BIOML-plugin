@@ -396,6 +396,8 @@ def runClassificationBioml(block: SlurmBlock):
     recall_weight = block.variables.get("recall_weight", 0.8)
     num_threads = block.variables.get("num_threads", 100)
     log_experiments = block.variables.get("log_experiments", False)
+    stratified = block.variables.get("stratified", True)
+
     if iterate_features:
         log_experiments = False
     
@@ -440,7 +442,7 @@ def runClassificationBioml(block: SlurmBlock):
 
     if iterate_features:
         command += f"-it "
-    if stratified:
+    if not stratified:
         command += f"-ti "
     if plot:
         command += f"-p {' '.join(plot)} "
