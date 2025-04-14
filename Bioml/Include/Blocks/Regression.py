@@ -298,7 +298,7 @@ def runRegressionBioml(block: SlurmBlock):
     if input_label is None:
         raise Exception("No input label provided")
     if file and not os.path.exists(input_label):
-        raise Exception(f"The input label file does not exist: {input_label}")
+        raise Exception(f"The input label file does not exist, use the absolute path: {input_label}")
 
     ## other varibales
     sheets = block.variables.get("sheet_name", None)

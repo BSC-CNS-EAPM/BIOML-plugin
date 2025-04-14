@@ -416,8 +416,9 @@ def setup_bsc_calculations_based_on_horus_remote(
     # powerpuff
     elif cluster in ["powerpuff", "phastos"]:
         print("Generating powerpuff girls jobs...")
+        jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
         bsc_calculations.local.parallel(
-            [f"source activate bioml\n\n{jobs}"],
+            [f"{jobs}"],
             cpus=min(40, len(jobs)),
             script_name=scriptName,
         )

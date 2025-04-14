@@ -130,9 +130,9 @@ def Finetune(block: SlurmBlock):
     
     input_label = block.inputs.get("input_label_file", None)
     if input_label is None:
-        raise Exception("No input fasta provided")
+        raise Exception("No input label provided")
     if not os.path.exists(input_label):
-        raise Exception(f"The input fasta file does not exist: {input_label}")
+        raise Exception(f"The input label file does not exist, ue the absolute path: {input_label}")
     
     # other variables
     llm_config = block.variables.get("llm_config", None)

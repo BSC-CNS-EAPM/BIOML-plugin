@@ -22,6 +22,7 @@ inputLabels = PluginVariable(
     id="in_labels",
     description="The label file or column name if label already in features",
     type=VariableTypes.STRING,
+    defaultValue=None,
 )
 
 Problem = PluginVariable(
@@ -154,9 +155,12 @@ def initialAction(block: SlurmBlock):
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
         raise Exception("No input label provided")
+
     if os.path.exists(input_label):
         input_label = block.remote.sendData(input_label, block.remote.workDir)
-    
+    else:
+        print("The input label is not a file (if it is, use the absolute path), it will be used as a column name")
+        
     problem = block.inputs.get("problem", None)
     if problem is None:
         raise Exception("No problem provided")

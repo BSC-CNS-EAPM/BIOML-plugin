@@ -314,6 +314,9 @@ def runSaveModelBioml(block: SlurmBlock):
     file = False
     if os.path.exists(input_label):
         file = True
+    else:
+        print("The input label is not a file (if it is, use the absolute path), it will be used as a column name")
+
 
     tune = block.variables.get("tune", True)
     

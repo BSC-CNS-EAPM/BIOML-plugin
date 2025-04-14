@@ -79,7 +79,7 @@ Seed = PluginVariable(
     id="seed",
     description="The seed for the random state.",
     type=VariableTypes.INTEGER,
-    defaultValue=12891245318,
+    defaultValue=63462634,
 )
 
 Option = PluginVariable(
