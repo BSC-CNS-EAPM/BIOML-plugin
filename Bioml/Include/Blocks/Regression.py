@@ -330,7 +330,7 @@ def runRegressionBioml(block: SlurmBlock):
     block.extraData["iterate_features"] = iterate_features
 
     # Create an copy the inputs
-    folderName = "savemodel_inputs"
+    folderName = "regre_inputs"
     os.makedirs(folderName, exist_ok=True)
     if file:
         os.system(f"cp {input_label} {folderName}")
@@ -352,12 +352,13 @@ def runRegressionBioml(block: SlurmBlock):
     else:
         command += f"-l {folderName}/{Path(input_label).name} "
     command += f"-i {folderName}/{Path(training_features).name} "
-    command += f"-sc {scaler} "
+    command += f"-s {scaler} "
     command += f"-o {training_output} "
     command += f"-k {kfold_parameters} "
     command += f"--seed {seed} "
     command += f"-st {split_strategy} "
-    command += f"-bu {budget_time} "
+    if budget_time is not None:
+        command += f"-bu {budget_time} "
     command += f"-ni {num_Iter} "
     command += f"-dw {difference_weight} "
     command += f"-be {best_models} "
@@ -368,7 +369,7 @@ def runRegressionBioml(block: SlurmBlock):
     if plot:
         command += f"-p {' '.join(plot)} "
     if drop:
-        command += f"-dr {' '.join(drop)} "
+        command += f"-d {' '.join(drop)} "
     if selected_models:
         command += f"-se {' '.join(selected_models)} "
     if not shuffle:

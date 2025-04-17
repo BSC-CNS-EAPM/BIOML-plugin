@@ -89,7 +89,7 @@ scalerVar = PluginVariable(
     description="The scaler to use.",
     type=VariableTypes.STRING_LIST,
     defaultValue="robust",
-    allowedValues=["robust", "standard", "minmax"],
+    allowedValues=["robust", "zscore", "minmax"],
 )
 
 outliersVar = PluginVariable(

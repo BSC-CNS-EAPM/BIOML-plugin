@@ -349,10 +349,7 @@ def setup_bsc_calculations_based_on_horus_remote(
     print("remote_host: ", remote_host)
 
     if remote_name != "local":
-        cluster = remote_host
-
-    if remote_host in localIPs.values():
-        cluster = "phastos"
+        cluster = remote_name
 
     # If we are working with pele, only marenostrum and nord3 are allowed
     if program == "pele":
@@ -414,9 +411,12 @@ def setup_bsc_calculations_based_on_horus_remote(
             # module_purge=modulePurge,
         )
     # powerpuff
-    elif cluster in ["powerpuff", "phastos"]:
+    elif cluster in ["powerpuff", "phastos", "blossom"]:
         print("Generating powerpuff girls jobs...")
-        jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
+        if cluster == "phastos":
+            jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
+        elif cluster == "blossom":
+            jobs = 'eval "$(/home/blossom/Programs/mamba/bin/conda shell.bash hook)"\n\nsource activate bioml\n\n' + jobs
         bsc_calculations.local.parallel(
             [f"{jobs}"],
             cpus=min(40, len(jobs)),
@@ -447,14 +447,6 @@ wait
 
 if [ $exit_code -ne 0 ]; then
     echo "Error: Script $script failed with exit code $exit_code" >&2
-    exit 1
-fi
-
-# Check if the .err file is empty in order to determine
-# if the script ran successfully
-if [ -s "${script%.*}.err" ]; then
-    echo "Error: Script $script failed with errors:" >&2
-    cat "${script%.*}.err" >&2
     exit 1
 fi
 
@@ -510,7 +502,7 @@ def launchCalculationAction(
     # Rewrite the main script to add the environment variables
     # and allow for waiting for the jobs to finish
     # This is only necessary for powerpuff and local
-    if cluster in ["phastos", "powerpuff", "local"]:
+    if cluster in ["phastos", "powerpuff", "local", "blossom"]:
         with open(scriptName, "w") as f:
             f.write("#!/bin/sh\n")
 
@@ -563,10 +555,9 @@ def launchCalculationAction(
         print("Running the simulation...")
 
         # Run the simulation
-        if cluster in ["powerpuff", "phastos"]:
+        if cluster in ["powerpuff", "phastos", "blossom"]:
             # The powerpuff cluster doesn't have Slurm, so we need to run the script manually & load the Schrodinger module
             command = f"cd {simRemoteDir} && bash {scriptName}"
-
             block.remote.remoteCommand(command)
 
         else:

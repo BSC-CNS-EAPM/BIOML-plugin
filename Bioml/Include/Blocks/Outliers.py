@@ -58,9 +58,9 @@ scalerVar = PluginVariable(
     name="Scaler",
     id="scaler",
     description="The scaler to use.",
-    type=VariableTypes.STRING,
+    type=VariableTypes.STRING_LIST,
     defaultValue="robust",
-    allowedValues=["robust", "standard", "minmax"],
+    allowedValues=["robust", "zscore", "minmax"],
 )
 contaminationVar = PluginVariable(
     name="Contamination",
@@ -80,7 +80,7 @@ numFeatures = PluginVariable(
 
 def runOutliersBioml(block: SlurmBlock):
     
-    input_excel = block.inputs.get("input_excel", None)
+    input_excel = block.inputs.get("input_file", None)
     if input_excel is None:
         raise Exception("No input excel provided")
     if not os.path.exists(input_excel):

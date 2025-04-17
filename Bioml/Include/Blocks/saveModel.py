@@ -370,7 +370,7 @@ def runSaveModelBioml(block: SlurmBlock):
     else:
         command += f"-l {input_label} "
     command += f"-i {folderName}/{Path(training_features).name} "
-    command += f"-sc {scaler} "
+    command += f"-s {scaler} "
     command += f"-o {model_output} "
     command += f"-k {kfold_parameters} "
     command += f"--seed {seed} "

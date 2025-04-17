@@ -33,6 +33,7 @@ outputEmbedding = PluginVariable(
     id="out_embedding",
     description="The path to the embedding file in csv or parquet format",
     type=VariableTypes.FILE,
+    allowedValues=["csv", "parquet"],
 )
 
 

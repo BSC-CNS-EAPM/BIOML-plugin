@@ -104,8 +104,8 @@ positionVar = PluginVariable(
     name="Position",
     id="position",
     description="The position of the mutation.",
-    type=VariableTypes.INTEGER,
-    defaultValue=0,
+    type=VariableTypes.LIST,
+    defaultValue=(),
 )
 
 ### ==========================#
