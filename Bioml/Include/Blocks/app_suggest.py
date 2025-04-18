@@ -172,7 +172,7 @@ def finalAction(block: SlurmBlock):
     block.setOutput(outputSuggest.id, Path(downloaded_path)/output_suggestions)
 
     e.loadCSV(
-        Path(downloaded_path)/output_suggestions,
+        str(Path(downloaded_path)/output_suggestions),
         "suggestions",
     )
 
@@ -180,7 +180,7 @@ def finalAction(block: SlurmBlock):
         from pathlib import Path
         path = ((Path(downloaded_path)/output_suggestions).parent / "heatmap").glob("*.png")
         for p in path:
-            e.loadImage(p, p.stem)
+            e.loadImage(str(p), p.stem)
 
 
 from utils import BSC_JOB_VARIABLES

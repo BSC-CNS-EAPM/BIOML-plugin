@@ -293,13 +293,13 @@ def finalAction(block: SlurmBlock):
 
     # the feature selection returns a shap_features plot and csv, then selected features excel
     if (p.parent/"shap_importance.csv").exists():
-        e.loadCSV(p.parent/"shap_importance.csv", "shap_values")
+        e.loadCSV(str(p.parent/"shap_importance.csv"), "shap_values")
     
     if (p.parent/"shap_features/feature_influence_on_model_prediction.png").exists():
-        e.loadImage(p.parent/"shap_features/feature_influence_on_model_prediction.png", "shap_plot")
+        e.loadImage(str(p.parent/"shap_features/feature_influence_on_model_prediction.png"), "shap_plot")
         try:
             l = list((p.parent/"shap_features/").glob("shap_top_*.png"))[0]
-            e.loadImage(l, "shap_top_features")
+            e.loadImage(str(l), "shap_top_features")
         except:
             pass
 

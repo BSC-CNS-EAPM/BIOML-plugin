@@ -437,7 +437,7 @@ def finalAction(block: SlurmBlock):
             for num, (sheet, df) in enumerate(training_features.items()):
                 df.to_csv(FolderName / f"training_results_{sheet}.csv")
                 e.loadCSV(
-                    FolderName / f"training_results_{sheet}.csv",
+                    str(FolderName / f"training_results_{sheet}.csv"),
                     f"top{num}_results_{sheet}",
                 )
     else:
@@ -457,7 +457,7 @@ def finalAction(block: SlurmBlock):
             for num, (sheet, df) in enumerate(results.items()):
                 df.to_csv(FolderName / f"training_results_{sheet}.csv")
                 e.loadCSV(
-                    FolderName / f"training_results_{sheet}.csv",
+                    str(FolderName / f"training_results_{sheet}.csv"),
                     f"results_{sheet}",
                 )
 
