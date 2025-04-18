@@ -597,7 +597,7 @@ classificationBlock = SlurmBlock(
         crossValidation,
         numThreads, tuneVar, optimizeVar,
         iterateFeatures,
-        stratifiedVar, logExperiments
+        stratifiedVar, logExperiments,
         majorityVar, stackVar
     ],
     outputs=[outputClassification],
