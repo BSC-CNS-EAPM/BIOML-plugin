@@ -57,7 +57,7 @@ optimizeVar = PluginVariable(
     type=VariableTypes.STRING_LIST,
     defaultValue="RMSE",
     allowedValues=[
-        "RMSE", "R2", "MSE", "MAE", "RMSLE", "MAPE"
+        "RMSE", "R2", "MSE", "MAE", "RMSLE", "MAPE", "NDCG", 
     ],
 )
 
@@ -246,6 +246,7 @@ greaterVar = PluginVariable(
     type=VariableTypes.BOOLEAN,
     defaultValue=True,
 )
+
 shuffleVar = PluginVariable(
     name="Shuffle",
     id="shuffle",

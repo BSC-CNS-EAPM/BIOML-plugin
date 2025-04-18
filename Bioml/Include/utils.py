@@ -348,8 +348,14 @@ def setup_bsc_calculations_based_on_horus_remote(
     print("remote_name: ", remote_name)
     print("remote_host: ", remote_host)
 
+
     if remote_name != "local":
-        cluster = remote_name
+        cluster = remote_host
+
+    if remote_host in localIPs.values():
+        reverse_localIPs = {v: k for k, v in localIPs.items()}
+        cluster = reverse_localIPs[remote_host]
+
 
     # If we are working with pele, only marenostrum and nord3 are allowed
     if program == "pele":
@@ -386,6 +392,7 @@ def setup_bsc_calculations_based_on_horus_remote(
     #         module_purge=modulePurge,
     #     )
     # marenostrum
+    
     elif "glogin" in cluster or "alogin" in cluster:
         print("Generating Marenostrum jobs...")
         bsc_calculations.mn5.singleJob(
@@ -416,20 +423,21 @@ def setup_bsc_calculations_based_on_horus_remote(
         if cluster == "phastos":
             jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
         elif cluster == "blossom":
-            jobs = 'eval "$(/home/blossom/Programs/mamba/bin/conda shell.bash hook)"\n\nsource activate bioml\n\n' + jobs
+            jobs = "eval $(conda shell.bash hook) && conda activate bioml && " + jobs
         bsc_calculations.local.parallel(
             [f"{jobs}"],
-            cpus=min(40, len(jobs)),
+            cpus=min(40, len([jobs])),
             script_name=scriptName,
         )
     # local
     elif cluster == "local":
         print("Generating local jobs...")
         bsc_calculations.local.parallel(
-            jobs,
-            cpus=min(40, len(jobs)),
+            [f"{jobs}"],
+            cpus=min(10, len([jobs])),
             script_name=scriptName,
         )
+
     else:
         raise Exception("Cluster not supported.")
 
@@ -438,7 +446,7 @@ def setup_bsc_calculations_based_on_horus_remote(
 
 HOOK_SCRIPT = """
 for script in calculation_script.sh_?; do
-    bash "$script" > "${script%.*}.out" 2> "${script%.*}.err" &
+    sh "$script" > "${script%.*}.out" 2> "${script%.*}.err" &
     exit_code=$?
 done
 
@@ -447,6 +455,14 @@ wait
 
 if [ $exit_code -ne 0 ]; then
     echo "Error: Script $script failed with exit code $exit_code" >&2
+    exit 1
+fi
+
+# Check if the .err file is empty in order to determine
+# if the script ran successfully
+if [ -s "${script%.*}.err" ]; then
+    echo "Error: Script $script failed with errors:" >&2
+    cat "${script%.*}.err" >&2
     exit 1
 fi
 

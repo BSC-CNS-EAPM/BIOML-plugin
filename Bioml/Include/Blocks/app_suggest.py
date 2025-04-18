@@ -74,14 +74,6 @@ TokenizerConfig = PluginVariable(
     allowedValues=["json", "yaml"],
 )
 
-pretrainedConfig = PluginVariable(
-    name="Pretrained Config",
-    id="pretrained_config",
-    description="The config file to use for AutoModel.from_pretrained function in json or yaml format",
-    type=VariableTypes.FILE,
-    defaultValue=None,
-    allowedValues=["json", "yaml"],
-)
 
 plotVar = PluginVariable(
     name="Plot",
@@ -96,7 +88,7 @@ strategyVar = PluginVariable(
     id="strategy",
     description="The strategy to use for the suggestions.",
     type=VariableTypes.STRING_LIST,
-    defaultValue="top_k",
+    defaultValue="masked_marginal",
     allowedValues=["masked_marginal", "wild_marginal"],
 )
 
@@ -129,21 +121,18 @@ def GenerateSuggestions(block: SlurmBlock):
     strategy = block.variables.get("strategy", "masked_marginal")
     llm_config = block.variables.get("llm_config", None)
     tokenizer_config = block.variables.get("tokenizer_config", None)
-    pretrained_config = block.variables.get("pretrained_config", None)
     positions = block.variables.get("position", ())
     
     if llm_config:
         llm_config = block.remote.sendData(llm_config, block.remote.workDir)
     if tokenizer_config:
         tokenizer_config = block.remote.sendData(tokenizer_config, block.remote.workDir)
-    if pretrained_config:
-        pretrained_config = block.remote.sendData(pretrained_config, block.remote.workDir)
     
         ## extradata
     block.extraData["output_suggestions"] = output_file
     block.extraData["plot"] = plot
 
-    command = f"python3 -m Bioml.applications.suggest "
+    command = f"python -m BioML.applications.suggest "
     command += f"--fasta {input_fasta} --save_path {output_file} --model_name {model_name} --strategy {strategy}"
     if not plot:
         command += " --plot"
@@ -151,8 +140,6 @@ def GenerateSuggestions(block: SlurmBlock):
         command += f" --llm_config {llm_config}"
     if tokenizer_config:
         command += f" --tokenizer_config {tokenizer_config}"
-    if pretrained_config:
-        command += f" --pretrained_config {pretrained_config}"
     if positions:
         command += f" --positions {' '.join(map(str, positions))}"
 
@@ -210,7 +197,6 @@ SuggestionBlock = SlurmBlock(
         modelName,
         LLMConfig,
         TokenizerConfig,
-        pretrainedConfig,
         plotVar,
         strategyVar,
         positionVar,
