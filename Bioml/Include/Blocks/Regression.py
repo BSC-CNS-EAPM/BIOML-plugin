@@ -270,6 +270,21 @@ numThreads = PluginVariable(
     defaultValue=100,
 )
 
+majorityVar = PluginVariable(
+    name="Majority",
+    id="majority",
+    description="If to train majority model",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=True,
+)
+
+stackVar = PluginVariable(
+    name="Stack",
+    id="stack",
+    description="If to train stack model",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=True,
+)
 
 def runRegressionBioml(block: SlurmBlock):
     from pathlib import Path
@@ -323,6 +338,9 @@ def runRegressionBioml(block: SlurmBlock):
     budget_time = block.variables.get("budget_time", None)
     num_threads = block.variables.get("num_threads", 100)
     log_experiments = block.variables.get("log_experiments", False)
+    majority = block.variables.get("majority", True)
+    stack = block.variables.get("stack", True)
+    
     if iterate_features:
         log_experiments = False
     ## Create the output folder
@@ -393,7 +411,11 @@ def runRegressionBioml(block: SlurmBlock):
         command += f"-sh {sheets} "
     if log_experiments:
         command += f"-log "
-
+    if not majority:
+        command += f"-mj "
+    if not stack:
+        command += f"-stck "
+    
     jobs = command
 
     
@@ -496,7 +518,8 @@ regressionBlock = SlurmBlock(
         shuffleVar,
         crossValidation,
         numThreads, tuneVar, optimizeVar,
-        iterateFeatures, logExperiments
+        iterateFeatures, logExperiments,
+        majorityVar, stackVar
         
     ],
     outputs=[outputRegression],

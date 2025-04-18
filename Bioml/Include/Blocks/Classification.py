@@ -337,9 +337,26 @@ logExperiments = PluginVariable(
     type=VariableTypes.BOOLEAN,
     defaultValue=False,
 )
-# ==========================#
 
 
+majorityVar = PluginVariable(
+    name="Majority",
+    id="majority",
+    description="If to train majority model",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=True,
+)
+
+stackVar = PluginVariable(
+    name="Stack",
+    id="stack",
+    description="If to train stack model",
+    type=VariableTypes.BOOLEAN,
+    defaultValue=True,
+)
+
+
+# ==========================
 def runClassificationBioml(block: SlurmBlock):
     from pathlib import Path
     #inputs
@@ -397,7 +414,9 @@ def runClassificationBioml(block: SlurmBlock):
     num_threads = block.variables.get("num_threads", 100)
     log_experiments = block.variables.get("log_experiments", False)
     stratified = block.variables.get("stratified", True)
-
+    majority = block.variables.get("majority", True)
+    stack = block.variables.get("stack", True)
+    
     if iterate_features:
         log_experiments = False
     
@@ -471,7 +490,11 @@ def runClassificationBioml(block: SlurmBlock):
         command += f"-sh {sheets} "
     if log_experiments:
         command += f"-log "
-
+    if not majority:
+        command += f"-mj "
+    if not stack:
+        command += f"-stck "
+        
     jobs = command
 
     block.variables["script_name"] = "classification.sh"
@@ -575,6 +598,7 @@ classificationBlock = SlurmBlock(
         numThreads, tuneVar, optimizeVar,
         iterateFeatures,
         stratifiedVar, logExperiments
+        majorityVar, stackVar
     ],
     outputs=[outputClassification],
 )
