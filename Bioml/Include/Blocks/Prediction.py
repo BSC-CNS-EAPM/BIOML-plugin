@@ -27,8 +27,9 @@ fastaFile = PluginVariable(
 modelPath = PluginVariable(
     name="Model Path",
     id="model_path",
-    description="The path to the model folder",
-    type=VariableTypes.FOLDER,
+    description="The path to the model in .pkl format",
+    type=VariableTypes.FILE,
+    allowedValues=["h5", "pkl"],
     defaultValue=None,
 )
 testFeatures = PluginVariable(
@@ -225,7 +226,7 @@ def runPredictionBioml(block: SlurmBlock):
     num_threads = block.variables.get("num_threads", 20)
     input_fasta = block.variables.get("fasta_file", None)
     folderName = "prediction_inputs"
-
+    os.makedirs(folderName, exist_ok=True)
     #inputs
     problem = block.inputs.get("problem", None)
     if problem is None:
@@ -250,7 +251,6 @@ def runPredictionBioml(block: SlurmBlock):
             raise Exception("No model path provided")
         if not os.path.exists(model_path):
             raise Exception(f"The model path does not exist: {model_path}")
-
         if input_fasta is None and problem == "classification" and applicability_domain:
             raise Exception("No fasta file provided, it is required for classification in classical ML")
         if input_fasta and not os.path.exists(input_fasta):
@@ -262,8 +262,10 @@ def runPredictionBioml(block: SlurmBlock):
             )
         
         os.system(f"cp {test_features} {folderName}")
-        os.system(f"cp -r {model_path} {folderName}")
+        os.system(f"cp {model_path} {folderName}")
 
+        model_path = Path(folderName)/Path(model_path).stem
+        
     if training_features:
         if not os.path.exists(training_features):
             raise Exception(
@@ -275,7 +277,7 @@ def runPredictionBioml(block: SlurmBlock):
             )
 
     # Create an copy the inputs
-    os.makedirs(folderName, exist_ok=True)
+    
     if input_fasta:
         os.system(f"cp {input_fasta} {folderName}")
     os.system(f"cp {training_features} {folderName}")
@@ -298,7 +300,7 @@ def runPredictionBioml(block: SlurmBlock):
         command += f"--fasta_file {folderName}/{Path(input_fasta).name} "
 
     if block.selectedInputGroup == "classical_group":
-        command += f"--model_path {folderName}/{Path(model_path).name} "
+        command += f"--model_path {model_path} "
         command += f"--test_features {folderName}/{Path(test_features).name} "
     elif block.selectedInputGroup == "fine_tune_group":
         command += f"-d "

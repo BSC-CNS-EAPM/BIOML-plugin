@@ -484,7 +484,7 @@ def runClassificationBioml(block: SlurmBlock):
         command += f"-c {folderName}/{Path(cluster).name} "
     if outliers:
         command += f"-ot {folderName}/{Path(outliers).name} "
-    if not tune:
+    if tune:
         command += f"--tune "
     if sheets:
         command += f"-sh {sheets} "
@@ -546,12 +546,11 @@ def finalAction(block: SlurmBlock):
         # visualize the results of the top 3 models trained for that feature set and plot theiur performance
         if os.path.exists(FolderName / "model_plots"):
             model_plots = Path(FolderName / "model_plots").glob("*/*/*.png")
+
             for plot in model_plots:
-                if "tuned" in str(plot):
-                    continue
-                if "Confusion" in str(plot):
-                    continue
-                e.loadImage(str(plot), f"{plot.parents[1].name}_{plot.parent.name}_{plot.stem}")
+                if "not_tuned" in str(plot) and  "Confusion" not in str(plot):
+                    e.loadImage(str(plot), f"{plot.parents[1].name}_{plot.parent.name}_{plot.stem}")
+                    
             results = pd.read_excel(
                 FolderName / "not_tuned" / "training_results.xlsx", sheet_name=["train", "test_results"], index_col=[0,1,2]
             )
