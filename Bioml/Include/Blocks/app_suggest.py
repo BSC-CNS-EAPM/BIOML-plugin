@@ -133,7 +133,7 @@ def GenerateSuggestions(block: SlurmBlock):
     block.extraData["plot"] = plot
 
     command = f"python -m BioML.applications.suggest "
-    command += f"--fasta {input_fasta} --save_path {output_file} --model_name {model_name} --strategy {strategy}"
+    command += f"{input_fasta} --save_path {output_file} --model_name {model_name} --strategy {strategy}"
     if not plot:
         command += " --plot"
     if llm_config:
