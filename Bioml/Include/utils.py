@@ -460,9 +460,9 @@ fi
 
 # Check if the .err file is empty in order to determine
 # if the script ran successfully
-if [ -s "${script%.*}.err" ]; then
-    echo "Error: Script $script failed with errors:" >&2
-    cat "${script%.*}.err" >&2
+if grep -i 'error' "${script%.*}.err" > /dev/null; then
+    echo "Error: Script $script failed with the following errors:" >&2
+    grep -i 'error' "${script%.*}.err" >&2
     exit 1
 fi
 
