@@ -1,2 +1,3 @@
 # This file contains the URLs where Horus will communicate updates of the flow to
 URL=http://localhost:4341
+URL=http://localhost:3000

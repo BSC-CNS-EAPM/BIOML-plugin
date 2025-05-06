@@ -169,7 +169,7 @@ def finalAction(block: SlurmBlock):
     output_suggestions = block.extraData["output_suggestions"]
     plot = block.extraData["plot"]
     
-    block.setOutput(outputSuggest.id, Path(downloaded_path)/output_suggestions)
+    block.setOutput(outputSuggest.id, str(Path(downloaded_path)/output_suggestions))
 
     e.loadCSV(
         str(Path(downloaded_path)/output_suggestions),
