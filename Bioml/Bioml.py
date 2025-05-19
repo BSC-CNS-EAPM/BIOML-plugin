@@ -58,6 +58,9 @@ def createPlugin():
 
     biomlPlugin.addBlock(SuggestionBlock)
 
+    from Blocks.Clusterize import ClusterizeBlock  # type: ignore
+    biomlPlugin.addBlock(ClusterizeBlock)
+
     from config import BIOML_CONFIG
     
     biomlPlugin.addConfig(BIOML_CONFIG)

@@ -1,5 +1,5 @@
 """
-A module that generates PSSM files using Mmseqs2
+A module that clusters sequences using Mmseqs2
 """
 
 import os
@@ -53,7 +53,7 @@ outputCluster = PluginVariable(
 
 
 
-def runGeneratePSSMBioml(block: SlurmBlock):
+def runClusterizeBioml(block: SlurmBlock):
     
     from pathlib import Path 
     
@@ -105,12 +105,12 @@ def finalAction(block: SlurmBlock):
 
 from utils import BSC_JOB_VARIABLES
 
-generatePSSMBlock = SlurmBlock(
-    name="PSSM Generation",
-    id="generate_pssm",
-    initialAction=runGeneratePSSMBioml,
+ClusterizeBlock = SlurmBlock(
+    name="Clusterize",
+    id="clusterize",
+    initialAction=runClusterizeBioml,
     finalAction=finalAction,
-    description="Generate PSSM files.",
+    description="Clusterize sequences using Mmseqs2",
     inputs=[fastaFile],
     variables=BSC_JOB_VARIABLES
     + [
