@@ -113,7 +113,8 @@ def GenerateSuggestions(block: SlurmBlock):
     if not os.path.exists(input_fasta):
         raise Exception(f"The input fasta file does not exist: {input_fasta}")
 
-    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    if not block.remote.isLocal:
+        input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
 
     output_file = block.variables.get("out_file", "suggestions.csv")
     model_name = block.variables.get("model_name", "facebook/esm2_t33_650M_UR50D")

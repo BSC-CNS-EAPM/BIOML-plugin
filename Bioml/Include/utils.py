@@ -432,6 +432,8 @@ def setup_bsc_calculations_based_on_horus_remote(
     # local
     elif cluster == "local":
         print("Generating local jobs...")
+        print("Jobs", jobs)
+        jobs = jobs.replace("python", "/home/perry/data/bioml_environ/bin/python")
         bsc_calculations.local.parallel(
             [f"{jobs}"],
             cpus=min(10, len([jobs])),
@@ -494,10 +496,14 @@ def launchCalculationAction(
     block.extraData["simulationName"] = simulationName
 
     print(f"Launching BSC calculation with {cpus} CPUs")
+    
+    host = "local"
+    if hasattr(block.remote, "host"):
+        host = block.remote.host
 
     cluster = setup_bsc_calculations_based_on_horus_remote(
         block.remote.name.lower(),
-        block.remote.host,
+        host,
         jobs,
         partition,
         scriptName,
