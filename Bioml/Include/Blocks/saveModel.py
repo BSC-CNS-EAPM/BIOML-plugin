@@ -19,11 +19,20 @@ from HorusAPI import (
 # ==========================#
 # Variable inputs
 # ==========================#
-inputLabels = PluginVariable(
-    name="Input labels",
-    id="in_labels",
-    description="The label file or column name if label already in features",
+inputLabelFile = PluginVariable(
+    name="Input Label File",
+    id="input_label_file",
+    description="The path to the labels of the training set in a csv format ",
+    type=VariableTypes.FILE,
+    defaultValue=None,
+    allowedValues=["csv"],
+)
+inputLabelString = PluginVariable(
+    name="Input Label String",
+    id="input_label_string",
+    description="The labels of the training set, if it is in the same file as the training features",
     type=VariableTypes.STRING,
+    defaultValue=None,
 )
 
 selectedClassification = PluginVariable(
@@ -151,6 +160,20 @@ outputModel = PluginVariable(
     id="model_output",
     description="The folder for the saved models",
     type=VariableTypes.FOLDER,
+)
+
+
+fileGroup = VariableGroup(
+    id="fileType_input",
+    name="Input File",
+    description="The input is a file",
+    variables=[inputLabelFile, trainingFeatures, Problem],
+)
+stringGroup = VariableGroup(
+    id="stringType_input",
+    name="Input String",
+    description="The input is a string",
+    variables=[inputLabelString, trainingFeatures, Problem],
 )
 
 ##############################
@@ -308,15 +331,17 @@ def runSaveModelBioml(block: SlurmBlock):
     if not selected_models:
         raise Exception("No selected models for the problem provided")
     
-    input_label = block.inputs.get("in_labels", None)
+    if block.selectedInputGroup == "stringType_input":
+        input_label = block.inputs.get("input_label_string", None)
+        file = False
+    else:
+        input_label = block.inputs.get("input_label_file", None)
+        file = True
+
     if input_label is None:
         raise Exception("No input label provided")
-    file = False
-    if os.path.exists(input_label):
-        file = True
-    else:
-        print("The input label is not a file (if it is, use the absolute path), it will be used as a column name")
-
+    if file and not os.path.exists(input_label):
+        raise Exception(f"The input label file does not exist, use the absolute path: {input_label}")
 
     tune = block.variables.get("tune", True)
     
@@ -448,7 +473,7 @@ SaveModelBlock = SlurmBlock(
     initialAction=runSaveModelBioml,
     finalAction=finalAction,
     description="Save models.",
-    inputs=[inputLabels, trainingFeatures, Problem],
+    inputGroups=[fileGroup, stringGroup],
     variables=BSC_JOB_VARIABLES
     + [ # Add the variables here
         ModelDir,
