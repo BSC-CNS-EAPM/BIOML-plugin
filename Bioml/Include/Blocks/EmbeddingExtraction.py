@@ -202,9 +202,9 @@ def finalAction(block: SlurmBlock):
     format = block.extraData["format"]
     
     if format == "csv":
-        block.setOutput(outputEmbedding.id, Path(downloaded_path)/output_embedding)
+        block.setOutput(outputEmbedding.id, str(Path(downloaded_path)/output_embedding))
     else:
-        block.setOutput(outputEmbedding.id, (Path(downloaded_path)/output_embedding).with_suffix(".parquet"))
+        block.setOutput(outputEmbedding.id, str((Path(downloaded_path)/output_embedding).with_suffix(".parquet")))
     
 
 
