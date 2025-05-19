@@ -158,8 +158,8 @@ Problem = PluginVariable(
 outputModel = PluginVariable(
     name="Model output",
     id="model_output",
-    description="The folder for the saved models",
-    type=VariableTypes.FOLDER,
+    description="The saved model without the .pkl extension",
+    type=VariableTypes.STRING,
 )
 
 
@@ -261,7 +261,7 @@ splitStrategy = PluginVariable(
     id="split_strategy",
     description="The strategy to split the data.",
     type=VariableTypes.STRING_LIST,
-    defaultValue=None,
+    defaultValue="cluster",
     allowedValues=["mutations", "cluster", "stratifiedkfold", "kfold"],
 )
 clusterVar = PluginVariable(

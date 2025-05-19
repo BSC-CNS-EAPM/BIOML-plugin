@@ -27,11 +27,11 @@ fastaFile = PluginVariable(
 modelPath = PluginVariable(
     name="Model Path",
     id="model_path",
-    description="The path to the model in .pkl format",
-    type=VariableTypes.FILE,
-    allowedValues=["h5", "pkl"],
+    description="The path to the model in without the .pkl",
+    type=VariableTypes.STRING,
     defaultValue=None,
 )
+
 testFeatures = PluginVariable(
     name="Test Features",
     id="test_features",
