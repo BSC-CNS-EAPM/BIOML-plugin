@@ -481,7 +481,7 @@ def finalAction(block: SlurmBlock):
                     f"results_{sheet}",
                 )
 
-    block.setOutput(outputRegression.id, FolderName)
+    block.setOutput(outputRegression.id, str(FolderName))
 
 
 from utils import BSC_JOB_VARIABLES

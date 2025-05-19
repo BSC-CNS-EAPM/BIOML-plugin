@@ -164,9 +164,9 @@ def finalAction(block: SlurmBlock):
     out_pssm = block.extraData["pssm_dir"]
     out_fasta = block.extraData["fasta_file"]
     
-    block.setOutput(outputFasta.id, Path(downloaded_path)/out_fasta)
+    block.setOutput(outputFasta.id, str(Path(downloaded_path)/out_fasta))
     
-    block.setOutput(outputPSSM.id, Path(downloaded_path)/out_pssm)
+    block.setOutput(outputPSSM.id, str(Path(downloaded_path)/out_pssm))
 
 
 from utils import BSC_JOB_VARIABLES

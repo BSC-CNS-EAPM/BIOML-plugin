@@ -526,7 +526,7 @@ def finalAction(block: SlurmBlock):
     iterate_features = block.extraData.get("iterate_features", False)
 
     e = Extensions()
-    block.setOutput(outputClassification.id, FolderName)
+    block.setOutput(outputClassification.id, str(FolderName))
     if iterate_features:
         # visualize the results of the top 3 feature sets (each feature set is a sheet in the excel file 
         # and will show the results of the top 3 models trained for that feature set)
@@ -560,6 +560,8 @@ def finalAction(block: SlurmBlock):
                     str(FolderName / f"training_results_{sheet}.csv"),
                     f"results_{sheet}",
                 )
+                 
+                               
 from utils import BSC_JOB_VARIABLES
 
 classificationBlock = SlurmBlock(

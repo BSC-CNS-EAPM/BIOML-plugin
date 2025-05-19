@@ -227,7 +227,7 @@ def finalAction(block: SlurmBlock):
     extracted_features = block.extraData["extracted_features"]
     file = list((Path(downloaded_path)/extracted_features).glob("*.csv"))[0]
     
-    block.setOutput(outputFeatures.id, file)
+    block.setOutput(outputFeatures.id, str(file))
 
 
 from utils import BSC_JOB_VARIABLES

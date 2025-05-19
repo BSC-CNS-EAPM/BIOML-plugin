@@ -303,7 +303,7 @@ def finalAction(block: SlurmBlock):
         except:
             pass
 
-    block.setOutput(outputSelection.id, Path(downloaded_path)/excel_selection)
+    block.setOutput(outputSelection.id, str(Path(downloaded_path)/excel_selection))
 
 
 from utils import BSC_JOB_VARIABLES

@@ -131,7 +131,7 @@ def finalAction(block: SlurmBlock):
     downloaded_path = downloadResultsAction(block)
     output_csv = block.extraData.get("outliers", "training_results/outliers.csv")
 
-    block.setOutput(outputOutliers.id, Path(downloaded_path) / output_csv)
+    block.setOutput(outputOutliers.id, str(Path(downloaded_path) / output_csv))
 
     # visualize the outliers
     e.loadCSV(str(Path(downloaded_path) / output_csv), "outliers")

@@ -357,7 +357,7 @@ def finalAction(block: SlurmBlock):
     downloaded_path = downloadResultsAction(block)
     prediction_output = block.extraData.get("prediction_dir", "prediction_result/predictions.csv")
 
-    block.setOutput(outputPrediction.id, Path(downloaded_path)/prediction_output)
+    block.setOutput(outputPrediction.id, str(Path(downloaded_path)/prediction_output))
     e.loadCSV(
         str(Path(downloaded_path)/prediction_output),
         "predictions",
