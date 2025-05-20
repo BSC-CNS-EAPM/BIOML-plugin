@@ -389,7 +389,7 @@ def runSaveModelBioml(block: SlurmBlock):
     os.system(f"cp {outliers} {folderName}")
     
     ## Command
-    command = "python -m BioML.models.save_models "
+    command = "python -m BioML.models.save_model "
     if file:
         command += f"-l {folderName}/{Path(input_label).name} "
     else:
