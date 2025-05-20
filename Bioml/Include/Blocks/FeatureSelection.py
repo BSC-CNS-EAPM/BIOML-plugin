@@ -191,14 +191,14 @@ def initialAction(block: SlurmBlock):
         raise Exception("No input csv provided")
     if not os.path.exists(input_csv):
         raise Exception(f"The input csv file does not exist: {input_csv}")
-    
-    input_csv = block.remote.sendData(input_csv, block.remote.workDir)
+    if not block.remote.isLocal:
+        input_csv = block.remote.sendData(input_csv, block.remote.workDir)
 
     input_label = block.inputs.get("in_labels", None)
     if input_label is None:
         raise Exception("No input label provided")
 
-    if os.path.exists(input_label):
+    if os.path.exists(input_label) and not block.remote.isLocal:
         input_label = block.remote.sendData(input_label, block.remote.workDir)
     else:
         print("The input label is not a file (if it is, use the absolute path), it will be used as a column name")
@@ -230,12 +230,14 @@ def initialAction(block: SlurmBlock):
         if not os.path.exists(cluster):
             raise Exception(f"The cluster file does not exist: {cluster}")
         else:
-            cluster = block.remote.sendData(cluster, block.remote.workDir)
+            if not block.remote.isLocal:
+                cluster = block.remote.sendData(cluster, block.remote.workDir)
 
     if outliers:
         if not os.path.exists(outliers):
             raise Exception(f"The outliers file does not exist: {outliers}")
-        outliers = block.remote.sendData(outliers, block.remote.workDir)
+        if not block.remote.isLocal:
+            outliers = block.remote.sendData(outliers, block.remote.workDir)
     # Outputs
     excel_selection = block.variables.get("excel_out", "training_features/selected_features.xlsx")
     block.extraData["excel_selection"] = excel_selection

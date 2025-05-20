@@ -124,9 +124,9 @@ def GenerateSuggestions(block: SlurmBlock):
     tokenizer_config = block.variables.get("tokenizer_config", None)
     positions = block.variables.get("position", ())
     
-    if llm_config:
+    if llm_config and not block.remote.isLocal:
         llm_config = block.remote.sendData(llm_config, block.remote.workDir)
-    if tokenizer_config:
+    if tokenizer_config and not block.remote.isLocal:
         tokenizer_config = block.remote.sendData(tokenizer_config, block.remote.workDir)
     
         ## extradata

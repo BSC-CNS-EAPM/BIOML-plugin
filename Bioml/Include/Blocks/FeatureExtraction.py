@@ -175,9 +175,9 @@ def initialAction(block: SlurmBlock):
     if "possum" in run and input_pssm is None:
         raise Exception("No input pssm folder provided to run the Possum program")
 
-
-    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
-    if input_pssm:
+    if not block.remote.isLocal:
+        input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    if input_pssm and not block.remote.isLocal:
         input_pssm = block.remote.sendData(input_pssm, block.remote.workDir)
     # send data
     block.extraData["input_fasta"] = input_fasta

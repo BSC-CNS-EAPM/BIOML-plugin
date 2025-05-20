@@ -150,11 +150,11 @@ def GenerateEmbeddings(block: SlurmBlock):
     tokenizer_config = block.variables.get("tokenizer_config", None)
     pretrained_config = block.variables.get("pretrained_config", None)
     
-    if llm_config:
+    if llm_config and not block.remote.isLocal:
         llm_config = block.remote.sendData(llm_config, block.remote.workDir)
-    if tokenizer_config:
+    if tokenizer_config and not block.remote.isLocal:
         tokenizer_config = block.remote.sendData(tokenizer_config, block.remote.workDir)
-    if pretrained_config:
+    if pretrained_config and not block.remote.isLocal:
         pretrained_config = block.remote.sendData(pretrained_config, block.remote.workDir)
     
         

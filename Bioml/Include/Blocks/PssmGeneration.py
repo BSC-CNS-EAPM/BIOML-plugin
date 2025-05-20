@@ -103,8 +103,8 @@ def runGeneratePSSMBioml(block: SlurmBlock):
         raise Exception("No input fasta provided")
     if not os.path.exists(input_fasta):
         raise Exception(f"The input fasta file does not exist: {input_fasta}")
-    
-    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    if not block.remote.isLocal:
+        input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
     
     possum_program_dir = block.config.get("possum_dir", None)
     database_input = block.config.get("database_input", None)

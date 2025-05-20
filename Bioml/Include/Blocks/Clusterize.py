@@ -62,8 +62,8 @@ def runClusterizeBioml(block: SlurmBlock):
         raise Exception("No input fasta provided")
     if not os.path.exists(input_fasta):
         raise Exception(f"The input fasta file does not exist: {input_fasta}")
-    
-    input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
+    if not block.remote.isLocal:
+        input_fasta = block.remote.sendData(input_fasta, block.remote.workDir)
     cluster_at_seq_identity = block.variables.get("cluster_at_seq_identity", 0.3)
 
     ## variables
