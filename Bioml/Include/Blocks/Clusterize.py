@@ -74,7 +74,7 @@ def runClusterizeBioml(block: SlurmBlock):
 
     command = f"python -m BioML.features.generate_pssm "
     command += f"-i {input_fasta} "
-    command += f"-cluster_at_sequence_identity {cluster_at_seq_identity} "
+    command += f"--cluster_at_sequence_identity {cluster_at_seq_identity} "
     command += f"--cluster_file {output_tsv} "
     command += f"-c  "
 

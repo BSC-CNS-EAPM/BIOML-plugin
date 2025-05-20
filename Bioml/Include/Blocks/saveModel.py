@@ -179,12 +179,12 @@ stringGroup = VariableGroup(
 ##############################
 #       Other variables      #
 ##############################
-ModelDir = PluginVariable(
-    name="Model directory Name",
-    id="model_dirname",
-    description="The path where to save the models training results.",
+ModelName = PluginVariable(
+    name="Model file name",
+    id="model_name",
+    description="The filename for the model without any extensions",
     type=VariableTypes.STRING,
-    defaultValue="models",
+    defaultValue="models/trained_model",
 )
 
 numThreads = PluginVariable(
@@ -373,7 +373,7 @@ def runSaveModelBioml(block: SlurmBlock):
     best_models = block.variables.get("best_models", 3)
     
     # outputs
-    model_output = block.variables.get("model_dirname", "models")
+    model_output = block.variables.get("model_name", "models/trained_model")
 
     # Create an copy the inputs
     folderName = "savemodel_inputs"
@@ -405,7 +405,7 @@ def runSaveModelBioml(block: SlurmBlock):
     command += f"-se {' '.join(selected_models)} "
     command += f"-op {optimize} "
     command += f"-p {problem} "
-    command += f"-bm {best_models} "
+    command += f"-be {best_models} "
 
     if not shuffle:
         command += f"-sf "
@@ -433,7 +433,6 @@ def runSaveModelBioml(block: SlurmBlock):
     block.extraData["model_output"] = model_output
     
 
-
     from utils import launchCalculationAction
 
     launchCalculationAction(
@@ -453,15 +452,15 @@ def finalAction(block: SlurmBlock):
 
     downloaded_path = downloadResultsAction(block)
 
-    folder_name = block.variables.get("model_output", "")
-    model = list((Path(downloaded_path)/folder_name).glob(".pkl"))
+    folder_name = block.extraData.get("model_output", "models/trained_model")
+    model = list((downloaded_path/Path(folder_name).parent).glob("*.pkl"))
     if len(model) == 1:
         model = model[0]
         block.setOutput(outputModel.id, f"{model.parent}/{model.stem}")
     elif len(model) == 0:
-        raise Exception(f"No model found, please check the output folder: {downloaded_path}")
+        raise Exception(f"No model found: {model}, please check the output folder: {downloaded_path}/{Path(folder_name).parent}")
     else:
-        print(f"There are more than one model, please check the output folder: {downloaded_path}")
+        print(f"There are more than one model, please check the output folder: {downloaded_path}/{Path(folder_name).parent}")
         print(f"Setting the output to the first model: {model[0]}")
         model = model[0]
         block.setOutput(outputModel.id, f"{model.parent}/{model.stem}")
@@ -478,7 +477,7 @@ SaveModelBlock = SlurmBlock(
     inputGroups=[fileGroup, stringGroup],
     variables=BSC_JOB_VARIABLES
     + [ # Add the variables here
-        ModelDir,
+        ModelName,
         scalerVar,
         kfoldParameters,
         outliersVar,

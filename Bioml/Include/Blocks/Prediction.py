@@ -27,7 +27,7 @@ fastaFile = PluginVariable(
 modelPath = PluginVariable(
     name="Model Path",
     id="model_path",
-    description="The path to the model in without the .pkl",
+    description="The path to the model without the .pkl",
     type=VariableTypes.STRING,
     defaultValue=None,
 )
@@ -249,7 +249,11 @@ def runPredictionBioml(block: SlurmBlock):
         model_path = block.inputs.get("model_path", None)
         if model_path is None:
             raise Exception("No model path provided")
-        if not os.path.exists(model_path):
+        model_path = Path(model_path)
+        if model_path.suffix and model_path.suffix == ".pkl":
+            print("The model path should not have a suffix")
+            model_path = model_path.with_suffix("")
+        if not os.path.exists(model_path.with_suffix(".pkl")):
             raise Exception(f"The model path does not exist: {model_path}")
         if input_fasta is None and problem == "classification" and applicability_domain:
             raise Exception("No fasta file provided, it is required for classification in classical ML")
@@ -262,7 +266,7 @@ def runPredictionBioml(block: SlurmBlock):
             )
         
         os.system(f"cp {test_features} {folderName}")
-        os.system(f"cp {model_path} {folderName}")
+        os.system(f"cp {Path(model_path).with_suffix('.pkl')} {folderName}")
 
         model_path = Path(folderName)/Path(model_path).stem
         
@@ -303,7 +307,7 @@ def runPredictionBioml(block: SlurmBlock):
         command += f"--model_path {model_path} "
         command += f"--test_features {folderName}/{Path(test_features).name} "
     elif block.selectedInputGroup == "fine_tune_group":
-        command += f"-d "
+        command += f"-de "
         command += f"--peft {folderName}/{Path(pef_model).name} "
         if llm_config:
             command += f"-lc {llm_config} "
