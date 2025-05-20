@@ -458,6 +458,8 @@ def finalAction(block: SlurmBlock):
     if len(model) == 1:
         model = model[0]
         block.setOutput(outputModel.id, f"{model.parent}/{model.stem}")
+    elif len(model) == 0:
+        raise Exception("No model found, please check the output folder")
     else:
         print("There are more than one model, please check the output folder")
         print(f"Setting the output to the first model: {model[0]}")
