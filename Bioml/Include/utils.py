@@ -421,11 +421,12 @@ def setup_bsc_calculations_based_on_horus_remote(
     elif cluster in ["powerpuff", "phastos", "blossom"]:
         print("Generating powerpuff girls jobs...")
         if cluster == "phastos":
-            jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
-            #jobs = "mamba run -n bioml " + jobs
+            #jobs = jobs.replace("python", "/home/phastos/Programs/mambaforge/envs/bioml/bin/python")
+            jobs = "/home/phastos/Programs/mambaforge/bin/conda run -n bioml " + jobs
         elif cluster == "blossom":
-            jobs = jobs.replace("python", "/home/blossom/Programs/mamba/envs/bioml/bin/python")
-        bsc_calculations.local.parallel(
+            #jobs = jobs.replace("python", "/home/blossom/Programs/mamba/envs/bioml/bin/python")
+            jobs = "/home/blossom/Programs/mamba/condabin/conda run -n bioml " + jobs
+            bsc_calculations.local.parallel(
             [f"{jobs}"],
             cpus=min(40, len([jobs])),
             script_name=scriptName,
